@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "PageSiren",
+  "version": "0.1.0",
+  "description": "Watches the pages you add and raises a siren when something meaningful changes.",
+  "homepage_url": "https://github.com/kerem-alkan/pagesiren",
+  "permissions": [
+    "storage",
+    "alarms",
+    "tabs",
+    "scripting",
+    "offscreen",
+    "declarativeNetRequestWithHostAccess"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Open PageSiren"
+  },
+  "icons": {
+    "128": "icon.png"
+  }
+}

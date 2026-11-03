@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PageSiren — ALARM</title>
+<link rel="icon" href="/icon.png">
+<style>
+  html, body { height:100%; margin:0; }
+  body { box-sizing:border-box; display:flex; flex-direction:column; padding:20px 26px; color:#fff; background:#d4202c; font:16px/1.4 "Segoe UI",system-ui,sans-serif; animation:yanip 1.2s steps(1) infinite; }
+  @keyframes yanip { 50% { background:#8c0f17; } }
+  #ust { font-size:20px; font-weight:700; letter-spacing:.04em; }
+  #ad { font-size:34px; font-weight:700; margin:10px 0 8px; word-break:break-word; }
+  ul { margin:0; padding-left:20px; flex:1; overflow:auto; font-size:17px; }
+  li { margin:3px 0; word-break:break-word; }
+  #diger { font-size:14px; color:#ffe1e1; margin:8px 0; }
+  .dugmeler { display:flex; gap:10px; flex-wrap:wrap; }
+  button { flex:1 1 150px; padding:14px 10px; font:700 17px "Segoe UI",system-ui,sans-serif; color:#960a14; background:#fff; border:0; border-radius:8px; cursor:pointer; }
+  button:hover { background:#ffe9e9; }
+</style>
+</head>
+<body>
+  <div id="ust"></div>
+  <div id="ad"></div>
+  <ul id="satirlar"></ul>
+  <div id="diger"></div>
+  <div class="dugmeler">
+    <button id="ac"></button><button id="sus"></button><button id="ekran"></button><button id="kapat"></button>
+  </div>
+  <audio id="ses" src="/siren.wav" loop></audio>
+  <script src="/i18n.js"></script>
+  <script>
+    const $ = (s) => document.querySelector(s);
+    let sonZaman = null;
+    let url = '';
+    let susturma = null;
+    const sus = () => { $('#ses').pause(); clearTimeout(susturma); };
+    const kapat = async () => {
+      sus();
+      await fetch('/mesaj', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tip: 'APP_ALARM_KAPAT' }) }).catch(() => {});
+      window.close();
+    };
+    $('#ac').onclick = () => { sus(); if (/^https?:/.test(url)) window.open(url, '_blank'); };
+    $('#sus').onclick = sus;
+    $('#ekran').onclick = () => window.open('/', '_blank');
+    $('#kapat').onclick = kapat;
+
+    async function bak() {
+      let d;
+      try { d = await (await fetch('/alarm-listesi', { cache: 'no-store' })).json(); } catch (e) { return; }
+      if (d.dil) T.dil(d.dil);
+      $('#ust').textContent = T('PAGESIREN ALARM');
+      $('#ac').textContent = T('Open site');
+      $('#sus').textContent = T('Mute');
+      $('#ekran').textContent = T('Dashboard');
+      $('#kapat').textContent = T('Close');
+      const a = d.alarmlar[0];
+      if (!a) { sus(); window.close(); return; }
+      if (a.zaman === sonZaman) return;
+      sonZaman = a.zaman;
+      url = a.url || '';
+      $('#ad').textContent = a.ad;
+      const u = $('#satirlar');
+      u.textContent = '';
+      for (const s of (a.satirlar || []).slice(0, 8)) { const li = document.createElement('li'); li.textContent = s; u.appendChild(li); }
+      const adlar = d.alarmlar.slice(1, 5).map((x) => x.ad);
+      $('#diger').textContent = new Date(a.zaman || Date.now()).toLocaleTimeString() + (adlar.length ? '   ·   ' + T('Other alarms: {adlar}', { adlar: adlar.join(', ') }) : '');
+      if (a.ses !== false) {
+        $('#ses').currentTime = 0;
+        $('#ses').play().catch(() => {});
+        clearTimeout(susturma);
+        susturma = setTimeout(sus, Math.max(5, Number(a.sesSn) || 60) * 1000);
+      }
+    }
+    bak();
+    setInterval(bak, 2000);
+  </script>
+</body>
+</html>
