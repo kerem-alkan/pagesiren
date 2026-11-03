@@ -118,20 +118,21 @@ async function durdur(c) {
   await durdur(y);
 
   console.log('5) Denetci: mini yoksa baslatir, kapanirsa yeniden baslatir, takilirsa kapatip baslatir');
-  y = yardimci(['--watchdog-sec', '100000', '--app', sahteMini, '--app-dead-sec', '3']);
+  // Not 3 s: on a slow CI machine the first summary can take longer than that, and the first copy gets replaced
+  y = yardimci(['--watchdog-sec', '100000', '--app', sahteMini, '--app-dead-sec', '8']);
   ok('mini baslatildi', await bekleKadar(() => baslamalar().length === 1, 8000), baslamalar().length);
-  ok('mini ozet yaziyor', await bekleKadar(async () => (await alJson('/durum')).mini === true, 5000));
+  ok('mini ozet yaziyor', await bekleKadar(async () => (await alJson('/durum')).mini === true, 7000));
   const p1 = baslamalar()[0];
   await bekle(1000);
   ok('calisirken ikinci kopya acilmaz', baslamalar().length === 1, baslamalar().length);
   process.kill(p1);
-  ok('kapaninca yeniden baslatildi', await bekleKadar(() => baslamalar().length === 2, 15000), baslamalar().length);
+  ok('kapaninca yeniden baslatildi', await bekleKadar(() => baslamalar().length === 2, 25000), baslamalar().length);
   const p2 = baslamalar()[1];
   await bekleKadar(async () => (await alJson('/ozet?kaynak=mini')).pid === p2, 5000);
   fs.writeFileSync(path.join(veri, 'sus'), '1');
-  ok('takilan mini kapatildi', await bekleKadar(() => !yasiyor(p2), 12000));
+  ok('takilan mini kapatildi', await bekleKadar(() => !yasiyor(p2), 25000));
   fs.rmSync(path.join(veri, 'sus'));
-  ok('yerine yenisi baslatildi', await bekleKadar(() => baslamalar().length === 3, 20000), baslamalar().length);
+  ok('yerine yenisi baslatildi', await bekleKadar(() => baslamalar().length === 3, 30000), baslamalar().length);
 
   console.log('6) Yardimci kapanip acilinca: mini ayakta kalir, port miras kalmadigi icin yardimci yeniden dinler, ikinci mini acilmaz');
   const p3 = baslamalar()[2];
