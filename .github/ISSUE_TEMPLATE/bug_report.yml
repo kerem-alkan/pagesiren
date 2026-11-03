@@ -1,0 +1,28 @@
+name: Something doesn't work
+description: It won't start, it crashes, or a button does nothing
+labels: ["bug"]
+body:
+  - type: textarea
+    id: ne-oldu
+    attributes:
+      label: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: beklenen
+    attributes:
+      label: What did you expect?
+  - type: input
+    id: sistem
+    attributes:
+      label: System
+      description: The version is at the top of the dashboard.
+      placeholder: Windows 11, PageSiren 0.1.0, Chrome
+    validations:
+      required: true
+  - type: textarea
+    id: gunluk
+    attributes:
+      label: Log
+      description: The last lines of `pagesiren.log` from the data folder, if relevant. Remove anything private first.
+      render: text

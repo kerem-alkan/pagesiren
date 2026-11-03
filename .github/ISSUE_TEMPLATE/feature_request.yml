@@ -1,0 +1,18 @@
+name: An idea
+description: Something that would make PageSiren more useful
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: PageSiren won't add buying, form filling, captcha solving or ways around bot protection. Everything else is welcome.
+  - type: textarea
+    id: amac
+    attributes:
+      label: What are you trying to do?
+      description: The page or situation, more than the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: nasil
+    attributes:
+      label: How would you like it to work?

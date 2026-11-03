@@ -2,6 +2,8 @@
 
 Thanks for looking. Bug reports with a page that misbehaves are the most useful thing you can send: a false alarm, or a change it missed.
 
+New here? Good places to start: try it on macOS or Linux and report what happened, [add your language](#adding-a-language), or rename a few Turkish identifiers to English. Please follow the [code of conduct](CODE_OF_CONDUCT.md).
+
 ## Setting up
 
 ```bash
@@ -47,4 +49,4 @@ To teach it "sold out" in a new language, add the words to `OLUMSUZ` in `extensi
 
 ## Regenerating the pictures
 
-`node tools/make-assets.js` makes the icon and the siren sound. `node tools/make-demo.js` records `docs/demo.gif` with the real program and a fake local shop. Nothing opens on screen.
+`node tools/make-assets.js` makes the icon and the siren sound. `node tools/make-demo.js` records `docs/demo.gif`, `docs/screenshot.png` and `docs/alarm.png` with the real program and a fake local shop; add `--lang tr` for the Turkish set. `node tools/make-social.js` makes `docs/social-preview.png`, the picture shown when a link to the repository is shared. Nothing opens on screen.

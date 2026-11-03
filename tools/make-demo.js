@@ -1,5 +1,5 @@
-// Records docs/demo.gif and docs/screenshot.png: the real program, a fake local shop, a headless browser. Nothing opens on screen, nothing leaves 127.0.0.1.
-// Run: node tools/make-demo.js   (needs Chrome, Edge or Brave; takes about 3 minutes because reads are real, 30 s apart)
+// Records docs/demo.gif, docs/screenshot.png and docs/alarm.png: the real program, a fake local shop, a headless browser. Nothing opens on screen, nothing leaves 127.0.0.1.
+// Run: node tools/make-demo.js [--lang tr]   (needs Chrome, Edge or Brave; takes about 3 minutes because reads are real, 30 s apart. --lang tr writes demo.tr.gif and so on)
 'use strict';
 const fs = require('fs');
 const os = require('os');
@@ -16,12 +16,30 @@ const UI_PORT = 47499;
 const UI = 'http://127.0.0.1:' + UI_PORT;
 const bekle = (ms) => new Promise((r) => setTimeout(r, ms));
 const gecici = fs.mkdtempSync(path.join(os.tmpdir(), 'pagesiren-demo-'));
+const DIL = process.argv[process.argv.indexOf('--lang') + 1] === 'tr' ? 'tr' : 'en';
+const UZANTI = DIL === 'tr' ? '.tr' : '';
+const METIN = {
+  en: {
+    baslik: 'Example Shop', dukkan: 'EXAMPLE SHOP', urun: 'Limited Edition Sneakers', fiyat: '$129.00', yok: 'Sold out', var: 'Add to cart',
+    p1: 'Only a small batch is made, and it goes fast. Sign up for nothing: just watch this page.', p2: 'Free returns within thirty days, shipped from the warehouse the same day.',
+    ad: ['Limited', 'Limited sneakers'],
+    y1: 'A page you care about: sold out, for now', y2: 'Paste the address. No account, nothing to configure', y3: 'It reads the page in the background, in a small browser of its own',
+    y4: 'Cookie banners, ads and clocks are ignored: it speaks up only when it matters', y5: 'Later, the page changes...', y6: 'It tells you exactly what changed',
+  },
+  tr: {
+    baslik: 'Örnek Mağaza', dukkan: 'ÖRNEK MAĞAZA', urun: 'Sınırlı Üretim Spor Ayakkabı', fiyat: '₺4.999', yok: 'Tükendi', var: 'Sepete ekle',
+    p1: 'Az sayıda üretildi, çabuk tükeniyor. Üye olmanıza gerek yok: bu sayfayı izlemeniz yeter.', p2: '30 gün içinde ücretsiz iade, aynı gün depodan kargo.',
+    ad: ['Sınırlı', 'Sınırlı spor ayakkabı'],
+    y1: 'Önemsediğiniz bir sayfa: şimdilik tükenmiş', y2: 'Adresi yapıştırın. Hesap yok, ayar yok', y3: 'Sayfayı arka planda, kendi küçük tarayıcısıyla okur',
+    y4: 'Çerez kutuları, reklamlar ve saatler elenir: sadece önemliyse ses çıkarır', y5: 'Sonra sayfa değişir...', y6: 'Neyin değiştiğini tam olarak söyler',
+  },
+}[DIL];
 
 // ------------------------------------------------------------------ fake shop
 let stokta = false;
 const dukkan = http.createServer((q, c) => {
   c.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-  c.end(`<!doctype html><html><head><meta charset="utf-8"><title>Example Shop</title><style>
+  c.end(`<!doctype html><html><head><meta charset="utf-8"><title>${METIN.baslik}</title><style>
     body{margin:0;background:#f4f4f6;color:#17181c;font:16px "Segoe UI",system-ui,sans-serif}
     nav{background:#17181c;color:#fff;padding:14px 26px;font-weight:700;letter-spacing:.04em}
     main{display:flex;gap:34px;padding:34px 26px}
@@ -29,10 +47,10 @@ const dukkan = http.createServer((q, c) => {
     h1{margin:0 0 8px;font-size:30px}.fiyat{font-size:22px;margin:10px 0 18px}
     .yok{display:inline-block;padding:11px 26px;border-radius:9px;background:#c9ccd3;color:#50535b;font-weight:700}
     button{padding:13px 34px;border:0;border-radius:9px;background:#16a34a;color:#fff;font:700 17px "Segoe UI",system-ui,sans-serif}
-    </style></head><body><nav>EXAMPLE SHOP</nav><main><div class="foto">👟</div><div>
-    <h1>Limited Edition Sneakers</h1><p>Only a small batch is made, and it goes fast. Sign up for nothing: just watch this page.</p>
-    <p>Free returns within thirty days, shipped from the warehouse the same day.</p><div class="fiyat">$129.00</div>
-    ${stokta ? '<button>Add to cart</button>' : '<span class="yok">Sold out</span>'}
+    </style></head><body><nav>${METIN.dukkan}</nav><main><div class="foto">👟</div><div>
+    <h1>${METIN.urun}</h1><p>${METIN.p1}</p>
+    <p>${METIN.p2}</p><div class="fiyat">${METIN.fiyat}</div>
+    ${stokta ? `<button>${METIN.var}</button>` : `<span class="yok">${METIN.yok}</span>`}
     </div></main></body></html>`);
 });
 
@@ -188,7 +206,7 @@ let uyg = null;
 (async () => {
   await new Promise((r) => dukkan.listen(0, '127.0.0.1', r));
   const dukkanAdres = 'http://127.0.0.1:' + dukkan.address().port + '/sneakers';
-  uyg = spawn(process.execPath, [path.join(KOK, 'app', 'pagesiren.js'), '--data', path.join(gecici, 'veri'), '--port', String(UI_PORT), '--no-helper', '--headless', '--lang', 'en',
+  uyg = spawn(process.execPath, [path.join(KOK, 'app', 'pagesiren.js'), '--data', path.join(gecici, 'veri'), '--port', String(UI_PORT), '--no-helper', '--headless', '--lang', DIL,
     '--clock-ms', '500', '--read-wait-ms', '400', '--reread-ms', '300', '--spread-ms', '0', '--open-limit', '100'], { stdio: 'ignore' });
   const mesaj = (m) => fetch(UI + '/mesaj', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(m) }).then((r) => r.json());
   for (let i = 0; i < 60; i++) { try { await mesaj({ tip: 'LISTE' }); break; } catch (e) { await bekle(300); } }
@@ -202,33 +220,33 @@ let uyg = null;
 
   // 1) the page today
   await k.git(dukkanAdres);
-  await yazi('A page you care about: sold out, for now');
+  await yazi(METIN.y1);
   await cek(2200);
 
   // 2) add it
   await k.git(UI + '/');
   await bekle(800);
-  await yazi('Paste the address. No account, nothing to configure');
+  await yazi(METIN.y2);
   await k.js(`document.querySelector('#y_aralik').value='30'`);
   await cek(700);
-  for (const parca of ['Limited', 'Limited sneakers']) { await k.js(`document.querySelector('#y_ad').value=${JSON.stringify(parca)}`); await cek(260); }
+  for (const parca of METIN.ad) { await k.js(`document.querySelector('#y_ad').value=${JSON.stringify(parca)}`); await cek(260); }
   await k.js(`document.querySelector('#y_url').value=${JSON.stringify(dukkanAdres)}`);
   await cek(1400);
   await k.js(`document.querySelector('#ekleBtn').click()`);
   await bekle(700);
-  await yazi('It reads the page in the background, in a small browser of its own');
+  await yazi(METIN.y3);
   await cek(1600);
 
   // 3) watching
-  await izlemeyiBekle((d) => d.izlemeler[0] && /watching \d+ items/.test(d.izlemeler[0].ozet) && !/awaiting/.test(d.izlemeler[0].ozet) && d.izlemeler[0].durum === 'izleniyor', 150);
+  await izlemeyiBekle((d) => d.izlemeler[0] && /watching \d+ items|\d+ öğe izleniyor/.test(d.izlemeler[0].ozet) && !/awaiting|onay bekliyor/.test(d.izlemeler[0].ozet) && d.izlemeler[0].durum === 'izleniyor', 150);
   await bekle(5500);
-  await yazi('Cookie banners, ads and clocks are ignored: it speaks up only when it matters');
+  await yazi(METIN.y4);
   await cek(2800);
 
   // 4) the page changes
   stokta = true;
   await k.git(dukkanAdres);
-  await yazi('Later, the page changes...');
+  await yazi(METIN.y5);
   await cek(2000);
 
   // 5) siren
@@ -236,16 +254,20 @@ let uyg = null;
   await k.git(UI + '/alarm');
   await bekle(600);
   for (let i = 0; i < 5; i++) { await cek(600); await bekle(600); }
+  await k.js(`document.body.style.animation='none'`); // the still picture: steady red, no blink
+  await bekle(200);
+  fs.writeFileSync(path.join(KOK, 'docs', 'alarm' + UZANTI + '.png'), await k.foto());
 
   // 6) the dashboard: what changed
   await k.git(UI + '/');
   await bekle(800);
-  await yazi('It tells you exactly what changed');
+  fs.writeFileSync(path.join(KOK, 'docs', 'screenshot' + UZANTI + '.png'), await k.foto());
+  await yazi(METIN.y6);
   await cek(3800);
-  fs.writeFileSync(path.join(KOK, 'docs', 'screenshot.png'), await k.foto());
 
-  gifYaz(kareler, path.join(KOK, 'docs', 'demo.gif'));
-  console.log('demo.gif:', Math.round(fs.statSync(path.join(KOK, 'docs', 'demo.gif')).size / 1024), 'KB,', kareler.length, 'frames');
+  const gif = path.join(KOK, 'docs', 'demo' + UZANTI + '.gif');
+  gifYaz(kareler, gif);
+  console.log(path.basename(gif) + ':', Math.round(fs.statSync(gif).size / 1024), 'KB,', kareler.length, 'frames');
 
   k.kapat();
   await fetch(UI + '/dur', { method: 'POST' }).catch(() => {});

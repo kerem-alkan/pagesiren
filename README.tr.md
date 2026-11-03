@@ -1,39 +1,61 @@
 <p align="center">
-  <img src="docs/logo.svg" width="96" alt="PageSiren logosu">
+  <img src="docs/banner.tr.svg" width="100%" alt="PageSiren: yenile tuşuna basmayı bırakın. Sayfa değiştiği an siren çalsın.">
 </p>
-<h1 align="center">PageSiren</h1>
-<p align="center">
-  <strong>Web sayfaları için bir siren.</strong><br>
-  Hangi sayfaları önemsediğinizi söyleyin. Gerçek bir değişiklik olana kadar sessiz kalır, olunca da kaçırmanız mümkün değildir.
-</p>
-<p align="center"><a href="https://github.com/kerem-alkan"><strong>Kerem Alkan</strong></a> tarafından geliştirildi</p>
-<p align="center"><a href="README.md">English</a></p>
 
 <p align="center">
-  <img src="docs/demo.gif" width="760" alt="Tükenmiş bir sayfa PageSiren'e ekleniyor; sayfa değişince kırmızı alarm penceresi neyin değiştiğini gösteriyor">
+  <strong>Yeniden satışa çıkan bilet. Stoğa giren ürün. Açılan randevu. Açıklanan sınav sonucu.</strong><br>
+  Hangi sayfaları önemsediğinizi PageSiren'e söyleyin. Gerçek bir değişiklik olana kadar sessiz kalır, olunca da kaçırmanız mümkün değildir.
 </p>
 
-## Deneyin
+<p align="center">
+  <a href="#hemen-başlayın"><img alt="Hemen başlayın" src="https://img.shields.io/badge/Hemen%20ba%C5%9Flay%C4%B1n-e2252f?style=for-the-badge"></a>
+  <a href="README.md"><img alt="English" src="https://img.shields.io/badge/English-2b303b?style=for-the-badge"></a>
+</p>
 
-[Node.js 22 veya üstü](https://nodejs.org) ile Chrome, Edge ya da Brave gerekir.
+<p align="center">
+  <a href="https://github.com/kerem-alkan/pagesiren/actions/workflows/ci.yml"><img alt="Testler" src="https://github.com/kerem-alkan/pagesiren/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://github.com/kerem-alkan/pagesiren/releases/latest"><img alt="Son sürüm" src="https://img.shields.io/github/v/release/kerem-alkan/pagesiren?color=blue"></a>
+  <a href="LICENSE"><img alt="Lisans: MIT" src="https://img.shields.io/badge/license-MIT-green"></a>
+  <img alt="Bağımlılık: 0" src="https://img.shields.io/badge/dependencies-0-brightgreen">
+  <img alt="Windows, macOS ve Linux'ta çalışır" src="https://img.shields.io/badge/runs_on-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey">
+</p>
 
-```bash
-npx github:kerem-alkan/pagesiren
-```
+<p align="center">
+  <img src="docs/demo.tr.gif" width="760" alt="Tükenmiş bir sayfa PageSiren'e ekleniyor; sayfa değişince kırmızı alarm penceresi neyin değiştiğini gösteriyor">
+</p>
 
-Takip ekranı `http://127.0.0.1:47431/` adresinde açılır. Sayfa adresini yapıştırıp **Ekle**'ye basın, hepsi bu.
-
-Kalıcı kurmak için:
-
-```bash
-npm install -g github:kerem-alkan/pagesiren
-```
-
-Sonra `pagesiren` yazarak başlatabilirsiniz. **Ayarlar**'dan oturum açınca kendiliğinden başlamasını sağlayabilirsiniz.
+<p align="center">
+  <strong>Ücretsiz ve açık kaynak.</strong> Hesap yok, bulut yok, veri toplama yok, sayfa sınırı yok.<br>
+  <a href="https://github.com/kerem-alkan"><strong>Kerem Alkan</strong></a> tarafından geliştirildi.
+</p>
 
 ## Ne izlenir
 
-Stoğa giren ürünler, biletler ve ikinci el satışlar, randevu boşlukları, kurs kontenjanları, vize ve kamu sayfaları, iş ilanları, "yakında" sayfaları: sürekli yenile tuşuna basacağınız her sayfa.
+<table>
+  <tr>
+    <td width="33%" valign="top"><strong>🎟️ Biletler</strong><br>Tükenmiş bir etkinliğe yeni koltuk ya da ikinci el bilet düşer.</td>
+    <td width="33%" valign="top"><strong>👟 Stok ve sınırlı ürünler</strong><br>"Tükendi" yazısı kalkar ya da sınırlı ürün satışa çıkar.</td>
+    <td width="33%" valign="top"><strong>📅 Randevular</strong><br>Vize, hastane ya da kamu randevusu açılır.</td>
+  </tr>
+  <tr>
+    <td valign="top"><strong>🎓 Okul ve sınav</strong><br>Kurs kontenjanı, sınav sonucu, kabul listesi.</td>
+    <td valign="top"><strong>💼 İş ve ev</strong><br>Kariyer sayfasında ya da ilan listesinde yeni ilan.</td>
+    <td valign="top"><strong>📣 Diğer her şey</strong><br>"Yakında" sayfaları, duyurular, fiyat değişiklikleri. Sürekli yenilediğiniz sayfayı o sizin yerinize yeniler.</td>
+  </tr>
+</table>
+
+## Nasıl çalışır
+
+1. **Adresi yapıştırın.** Hesap yok, ayar yok.
+2. **Unutun.** Sayfayı arka planda, seçtiğiniz aralıkla okur. Çerez kutuları, reklamlar ve saatler elenir.
+3. **Sireni duyun.** Her şeyin üstünde kırmızı pencere, siren ve tam olarak neyin değiştiğinin listesi. İsterseniz telefonunuza da gelir.
+
+<table>
+  <tr>
+    <td width="50%" align="center"><img src="docs/alarm.tr.png" alt="Sayfayı ve neyin değiştiğini yazan kırmızı alarm penceresi"><br><sub>Alarm: kaçırılması zor</sub></td>
+    <td width="50%" align="center"><img src="docs/screenshot.tr.png" alt="Bir izlemeyi ve bulduğu değişiklikleri gösteren takip ekranı"><br><sub>Takip ekranı: satır satır neyin değiştiği</sub></td>
+  </tr>
+</table>
 
 ## Neden PageSiren
 
@@ -51,7 +73,116 @@ PageSiren sadece haber verir. Satın almaz, sepete eklemez, sizin yerinize giri�
 
 Lütfen makul aralıklar kullanın ve sitelerin kurallarına uyun. Kullanım sorumluluğu size aittir.
 
-## Alarm ve bildirimler
+## Diğerlerinden farkı
+
+| | **PageSiren** | Çevrim içi izleme servisleri | [changedetection.io](https://github.com/dgtlmoon/changedetection.io) |
+|---|---|---|---|
+| Nerede çalışır | Kendi bilgisayarınızda | Onların sunucusunda | Kendi sunucunuzda ya da ücretli barındırmada |
+| Hesap | Yok | Gerekir | Kendiniz kurarsanız yok |
+| Ücret | Ücretsiz, sınır yok | Ücretsiz katman, sonra aylık | Kendiniz kurarsanız ücretsiz |
+| Kurulum | Tek komut | Üyelik | Docker ya da Python |
+| Giriş isteyen sayfalar | Bir kez giriş yapmanız yeter | Bazen | Tarayıcı adımlarıyla mümkün |
+| Kaçırılmaz alarm | Kırmızı pencere ve siren | E-posta ya da uygulama bildirimi | Bildirimler |
+
+PageSiren tek kişilik, küçük bir masaüstü aracıdır. Sunucu, ekip, görsel seçici ve çok daha fazla entegrasyon istiyorsanız changedetection.io'yu kullanın. Komut satırını ve cron'u seviyorsanız [urlwatch](https://github.com/thp/urlwatch)'a bakın. İkisi de çok iyi.
+
+## Hemen başlayın
+
+[Node.js](https://nodejs.org) (22 veya üstü) ile Chrome, Edge ya da Brave gerekir. Daha önce terminal kullanmadıysanız merak etmeyin, hepsi bu kadar:
+
+1. **Node.js'i kurun.** [nodejs.org](https://nodejs.org) adresinden indirin, kurulumda ileri diyerek geçin.
+2. **Terminali açın.** Windows: Başlat tuşuna basın, `cmd` yazın, Enter'a basın. Mac: *Terminal* uygulamasını açın.
+3. **Şunu yapıştırıp Enter'a basın:**
+
+   ```bash
+   npx --yes https://github.com/kerem-alkan/pagesiren/archive/refs/tags/v0.1.0.tar.gz
+   ```
+
+4. **Sayfa ekleyin.** Takip ekranı tarayıcınızda `http://127.0.0.1:47431/` adresinde açılır. **+ Yeni izleme ekle**'ye basın, sayfa adresini yapıştırın, **Ekle**'ye basın. Hepsi bu.
+
+İzleme sürerken terminal penceresi açık, bilgisayar da uyanık kalmalı.
+
+> [!TIP]
+> **Ayarlar** bölümündeki **Test alarmı çal** düğmesine bir kez basın, sirenin sesini bilin.
+
+Kalıcı kurmak, istediğiniz zaman `pagesiren` yazarak başlatmak için:
+
+```bash
+npm install -g https://github.com/kerem-alkan/pagesiren/archive/refs/tags/v0.1.0.tar.gz
+```
+
+Sonra **Ayarlar**'dan **Oturum açınca PageSiren başlasın** kutusunu işaretleyin, bundan sonra kendiliğinden çalışır.
+
+## Sorular
+
+<details>
+<summary><strong>Gerçekten ücretsiz mi?</strong></summary>
+
+Evet. MIT lisanslı, ücretli sürümü yok, sınır yok, hesap yok. Kendi bilgisayarınızda çalışır.
+</details>
+
+<details>
+<summary><strong>Bileti alır ya da randevuyu tutar mı?</strong></summary>
+
+Hayır, ileride de yapmayacak. Size haber verir, gerisi sizde.
+</details>
+
+<details>
+<summary><strong>Site beni engeller mi?</strong></summary>
+
+Normal bir ziyaretçi gibi, seçtiğiniz aralıkla ve kılık değiştirmeden okur. Site bot kontrolü ya da kuyruk çıkarırsa zorlamaz, geri çekilir ve size söyler. Makul aralıklar kullanın, sitelerin kurallarına uyun.
+</details>
+
+<details>
+<summary><strong>Bilgisayarım kapalıyken çalışır mı?</strong></summary>
+
+Hayır. Kendi bilgisayarınızda çalıştığı için bilgisayar açık ve uyanık olmalı. Hesapsız ve bulutsuz olmanın bedeli bu.
+</details>
+
+<details>
+<summary><strong>Alarm telefonuma gelir mi?</strong></summary>
+
+Evet: Telegram, Discord, ntfy ya da herhangi bir webhook. Takip ekranındaki **Bildirimler** bölümünden ayarlanır, her kanalın test düğmesi vardır. İzlemeyi yine bilgisayarınız yapar.
+</details>
+
+<details>
+<summary><strong>Giriş isteyen sayfaları izleyebilir mi?</strong></summary>
+
+Evet. İzlemedeki **Aç** düğmesine basın, açılan pencerede bir kez giriş yapın. Sonraki okumalar girişli kalır, oturum düşerse size söyler.
+</details>
+
+<details>
+<summary><strong>Verilerim nereye gidiyor?</strong></summary>
+
+Hiçbir yere. Program sadece eklediğiniz sayfalara ve kurduğunuz bildirim kanallarına istek gönderir. Her şey bilgisayarınızda tek klasörde durur. O klasör giriş çerezlerinizi de tutar, özel olarak düşünün.
+</details>
+
+<details>
+<summary><strong>Mac ve Linux'ta çalışır mı?</strong></summary>
+
+Her gün kullanıldığı yer Windows. macOS ve Linux'ta çalışması beklenir ama yeni ve çok daha az denenmiştir, geri bildirimleriniz çok değerli.
+</details>
+
+## Tüm ayrıntılar
+
+<details>
+<summary><strong>Her sayfanın seçenekleri</strong></summary>
+
+| Seçenek | Ne yapar |
+|---|---|
+| Ne sıklıkla baksın | 30 saniyeden 30 dakikaya kadar. 5 dakika sitelere karşı nazik bir aralıktır. |
+| Kelimeler | Sadece değişiklikte bu kelimelerden biri geçerse alarm verir. "Tükendi" yazısının kalkması her zaman sayılır. |
+| Her değişiklikte alarm ver | Yön kuralını kapatır. |
+| Giriş kontrolü | Sadece giriş yapınca görünen bir yazı. Kaybolursa, çıkış yapılmış sayfayı izlemek yerine size bir kez söyler. |
+| Hızlı | "Tükendi" kalkınca ilk okumada alarm verir, bir dakikada biten şeyler için. |
+| Sekmeyi açık tut | Geç dolan yavaş sayfalar için. |
+| Sayfayı kim okusun | Ayrı tarayıcı (varsayılan), düz HTTP (en hafif) ya da eklentiyle kendi Chrome'unuz. |
+
+Takip ekranında ayrıca: **Yeniden nöbet** sayfanın şu anki halini yeni normal yapar, **Yanlış alarm** o değişikliği görmezden gelmeyi öğretir, **İzlemeleri dışa/içe aktar** listenizi başka bilgisayara taşır.
+</details>
+
+<details>
+<summary><strong>Alarm ve bildirimler</strong></summary>
 
 | | Windows | macOS, Linux |
 |---|---|---|
@@ -61,11 +192,25 @@ Lütfen makul aralıklar kullanın ve sitelerin kurallarına uyun. Kullanım sor
 
 Windows'taki masaüstü penceresi küçük bir yardımcıdan gelir. Bu depoda hazır exe yoktur: ilk çalıştırmada [kaynağından](windows-helper/PageSirenAlarm.cs) Windows'la gelen C# derleyicisiyle derlenir. Olmazsa tarayıcı penceresi devreye girer.
 
-Bildirimler, takip ekranındaki **Bildirimler** bölümünü doldurana kadar kapalıdır. Her kanalın bir test düğmesi vardır.
+Bildirimler, takip ekranındaki **Bildirimler** bölümünü doldurana kadar kapalıdır.
+</details>
 
-**Platformlar:** Her gün kullanıldığı yer Windows. macOS ve Linux'ta çalışması beklenir ama yeni ve çok daha az denenmiştir, geri bildirimleriniz çok değerli.
+<details>
+<summary><strong>Komut satırı</strong></summary>
 
-## Verileriniz ve kaldırma
+```text
+pagesiren [--port <n>] [--data <klasör>] [--chrome <yol>] [--lang <en|tr>] [--no-open] [--no-helper]
+```
+</details>
+
+<details>
+<summary><strong>Chrome eklentisi (isteğe bağlı)</strong></summary>
+
+`extension` klasörü tek başına da çalışır: `chrome://extensions` sayfasına gidin, Geliştirici modunu açın, **Paketlenmemiş öğe yükle**'ye basıp klasörü seçin. Böylece sayfaları her gün kullandığınız Chrome'da okur; bu, sadece o tarayıcıya güvenen az sayıdaki sitede işe yarar. Windows'ta programın yanında da çalışabilir: izlemede *Chrome eklentim* seçeneğini seçin.
+</details>
+
+<details>
+<summary><strong>Verileriniz ve kaldırma</strong></summary>
 
 Her şey tek klasörde durur. İçindeki tarayıcı profili giriş çerezlerinizi tutar, özel olarak düşünün.
 
@@ -73,7 +218,26 @@ Her şey tek klasörde durur. İçindeki tarayıcı profili giriş çerezleriniz
 |---|---|---|
 | `%LOCALAPPDATA%\PageSiren` | `~/Library/Application Support/PageSiren` | `~/.local/share/pagesiren` |
 
-Kaldırmak için: *Oturum açınca başlasın* ayarını kapatın, programı kapatın (saat yanındaki simge ya da Ctrl+C), bu klasörü silin; kurduysanız `npm uninstall -g pagesiren` çalıştırın.
+Kaldırmak için: *Oturum açınca PageSiren başlasın* ayarını kapatın, programı kapatın (saat yanındaki simge ya da Ctrl+C), bu klasörü silin; kurduysanız `npm uninstall -g pagesiren` çalıştırın.
+</details>
+
+## Sırada ne var
+
+- [ ] Windows için tek tıkla indirme, terminal gerekmeden
+- [ ] Daha kısa kurulum: `npx pagesiren`
+- [ ] Chrome Web Mağazası
+- [ ] Daha fazla dil
+- [ ] macOS ve Linux'tan gerçek kullanım raporları
+
+## Katkıda bulunun
+
+En işe yarayan katkı, yanlış çalışan bir sayfayı bildirmektir: [yanlış alarm ya da kaçan değişiklik](https://github.com/kerem-alkan/pagesiren/issues/new?template=false_alarm.yml). Diğer kolay yollar:
+
+- **macOS ya da Linux'ta deneyin** ve ne olduğunu yazın.
+- **Dilinizi ekleyin.** Tek bir metin bloğu, [nasıl yapılacağı burada](CONTRIBUTING.md#adding-a-language). "Tükendi"yi kendi dilinizde öğretmek de işe yarar.
+- **Sürekli yenile tuşuna basan bir arkadaşınıza söyleyin.**
+
+PageSiren işinize yaradıysa bir ⭐ başkalarının da bulmasına yardım eder.
 
 ## Geliştirme
 
@@ -81,7 +245,7 @@ Kaldırmak için: *Oturum açınca başlasın* ayarını kapatın, programı kap
 npm test
 ```
 
-Derleme adımı ve bağımlılık yok. Ayrıntılar İngilizce: [nasıl çalışır](docs/ARCHITECTURE.md), [katkı](CONTRIBUTING.md), [güvenlik](SECURITY.md).
+Derleme adımı ve bağımlılık yok. Ayrıntılar İngilizce: [nasıl çalışır](docs/ARCHITECTURE.md), [katkı](CONTRIBUTING.md), [güvenlik](SECURITY.md), [davranış kuralları](CODE_OF_CONDUCT.md).
 
 [Kerem Alkan](https://github.com/kerem-alkan) tarafından geliştirildi ve sürdürülüyor; bir yapay zekâ asistanının (Claude) yoğun yardımı alındı. Her gün gerçek sayfalarda kullanıldı. Testler gerçek; kodu okuyup kendiniz karar verin.
 
@@ -91,6 +255,6 @@ Hata ve öneriler: [issues](https://github.com/kerem-alkan/pagesiren/issues). Di
 
 ## Lisans
 
-[MIT](LICENSE) © 2026 Kerem Alkan. Lisans ve telif satırı korunduğu sürece özgürce kullanabilir, değiştirebilir ve paylaşabilirsiniz.
+[MIT](LICENSE) © 2026 Kerem Alkan. Kısacası: lisans ve telif satırı korunduğu sürece özgürce kullanabilir, değiştirebilir ve paylaşabilirsiniz.
 
 Hiçbir web sitesiyle bağlantısı yoktur. Testlerde geçen site adları sadece gerçek sayfa davranışlarını yeniden üretmek içindir.

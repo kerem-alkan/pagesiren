@@ -1,0 +1,36 @@
+name: False alarm or missed change
+description: It rang when nothing real changed, or it stayed quiet when something did
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: This is the most useful report you can send. Thank you for taking the time.
+  - type: dropdown
+    id: ne-oldu
+    attributes:
+      label: What happened?
+      options:
+        - It rang, but nothing real changed
+        - Something changed, but it stayed quiet
+    validations:
+      required: true
+  - type: textarea
+    id: sayfa
+    attributes:
+      label: The page
+      description: The address if you can share it, and what changed on it.
+    validations:
+      required: true
+  - type: textarea
+    id: alarm
+    attributes:
+      label: What the alarm said
+      description: The lines from the alarm or the dashboard. Remove anything private first.
+  - type: input
+    id: sistem
+    attributes:
+      label: System
+      description: The version is at the top of the dashboard.
+      placeholder: Windows 11, PageSiren 0.1.0, Chrome
+    validations:
+      required: true
