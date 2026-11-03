@@ -10,6 +10,7 @@ app/store.js                          chrome.storage.local as files
 app/notify.js                         optional Telegram, Discord, ntfy, webhook
 app/helper.js, autostart.js           builds the Windows helper; start at login
 windows-helper/PageSirenAlarm.cs      red window on top of everything, tray icon, watchdog, supervisor
+windows-installer/PageSirenSetup.cs   one-click installer and console-free launcher (built for releases only)
 extension/dashboard.*, i18n.js        the screen, in the program and in the extension alike
 ```
 

@@ -8,7 +8,8 @@
 </p>
 
 <p align="center">
-  <a href="#get-started"><img alt="Get started" src="https://img.shields.io/badge/Get%20started-e2252f?style=for-the-badge"></a>
+  <a href="https://github.com/kerem-alkan/pagesiren/releases/latest/download/PageSiren-Setup.exe"><img alt="Download for Windows" src="https://img.shields.io/badge/Download%20for%20Windows-e2252f?style=for-the-badge"></a>
+  <a href="#macos-and-linux"><img alt="macOS and Linux" src="https://img.shields.io/badge/macOS%20and%20Linux-2b303b?style=for-the-badge"></a>
   <a href="README.tr.md"><img alt="Türkçe" src="https://img.shields.io/badge/T%C3%BCrk%C3%A7e-2b303b?style=for-the-badge"></a>
 </p>
 
@@ -80,7 +81,7 @@ Please use sensible intervals and respect each site's terms. You are responsible
 | Runs on | Your computer | Their servers | Your server, or their paid hosting |
 | Account | None | Required | None if you host it yourself |
 | Price | Free, no limits | Free tier, then monthly | Free if you host it yourself |
-| Setup | One command | Sign up | Docker or Python |
+| Setup | One download | Sign up | Docker or Python |
 | Pages behind your login | Log in once | Sometimes | Possible with browser steps |
 | Alarm you can't miss | Red window and siren | Email or app notification | Notifications |
 
@@ -88,30 +89,37 @@ PageSiren is a small desktop tool for one person. If you want a server, teams, a
 
 ## Get started
 
-You need [Node.js](https://nodejs.org) (version 22 or newer) and Chrome, Edge or Brave. Never used a terminal? Don't worry, this is all of it:
+### Windows
 
-1. **Install Node.js.** Download it from [nodejs.org](https://nodejs.org) and click through the installer.
-2. **Open a terminal.** Windows: press the Start key, type `cmd`, press Enter. Mac: open the *Terminal* app.
-3. **Paste this and press Enter:**
+1. **Download [PageSiren-Setup.exe](https://github.com/kerem-alkan/pagesiren/releases/latest/download/PageSiren-Setup.exe)** (about 35 MB). Everything it needs is inside.
+2. **Double-click it.** No admin rights, no terminal, nothing else to install.
+3. **Add a page.** The dashboard opens in your browser. Press **+ Add a page to watch**, paste the address and press **Add**. That's all.
 
-   ```bash
-   npx --yes https://github.com/kerem-alkan/pagesiren/archive/refs/tags/v0.1.0.tar.gz
-   ```
+> [!NOTE]
+> PageSiren is new and isn't code-signed yet, so your browser may ask if you want to keep the file, and Windows may say *Windows protected your PC*. Press **More info**, then **Run anyway**. [Why, and how to check the file](#why-does-windows-warn-me-about-the-installer).
 
-4. **Add a page.** The dashboard opens in your browser at `http://127.0.0.1:47431/`. Press **+ Add a page to watch**, paste the address and press **Add**. That's all.
-
-Keep the terminal window open and the computer awake while it watches.
+It runs in the background, with an icon next to the clock. Tick **Start PageSiren when I log in** under **Settings** so it comes back after a restart. It reads pages with Edge, which every Windows has, or with Chrome or Brave.
 
 > [!TIP]
 > Press **Play a test alarm** under **Settings** once, so you know what the siren sounds like.
 
+### macOS and Linux
+
+You need [Node.js](https://nodejs.org) (version 22 or newer) and Chrome, Edge or Brave. Open a terminal, paste this and press Enter:
+
+```bash
+npx --yes https://github.com/kerem-alkan/pagesiren/archive/refs/tags/v0.1.1.tar.gz
+```
+
+The dashboard opens in your browser at `http://127.0.0.1:47431/`. Keep the terminal window open and the computer awake while it watches.
+
 To keep it installed, so you can start it any time by typing `pagesiren`:
 
 ```bash
-npm install -g https://github.com/kerem-alkan/pagesiren/archive/refs/tags/v0.1.0.tar.gz
+npm install -g https://github.com/kerem-alkan/pagesiren/archive/refs/tags/v0.1.1.tar.gz
 ```
 
-Then tick **Start PageSiren when I log in** under **Settings**, and it runs by itself from then on.
+Then tick **Start PageSiren when I log in** under **Settings**, and it runs by itself from then on. These commands work on Windows too, if you prefer them.
 
 ## Questions
 
@@ -119,6 +127,19 @@ Then tick **Start PageSiren when I log in** under **Settings**, and it runs by i
 <summary><strong>Is it really free?</strong></summary>
 
 Yes. MIT license, no paid version, no limits, no account. It runs on your own computer.
+</details>
+
+<a id="why-does-windows-warn-me-about-the-installer"></a>
+<details>
+<summary><strong>Why does Windows warn me about the installer?</strong></summary>
+
+Because it's new and isn't code-signed, not because anything was found in it. Windows warns about any program it hasn't seen many people run.
+
+You don't have to take my word for it. The installer is built from this public source by GitHub Actions, and the Node.js inside it is the official signed one. You can compare it with the SHA-256 file on the [release page](https://github.com/kerem-alkan/pagesiren/releases/latest), or check where it came from:
+
+```bash
+gh attestation verify PageSiren-Setup.exe --repo kerem-alkan/pagesiren
+```
 </details>
 
 <details>
@@ -190,7 +211,7 @@ Other things on the dashboard: **Re-arm** makes a page's current state the new n
 | Sound | Yes | Yes |
 | Phone (optional) | Telegram, Discord, ntfy, webhook | Telegram, Discord, ntfy, webhook |
 
-On Windows the desktop window comes from a small helper. There is no binary in this repository: at first run it is built from [its source](windows-helper/PageSirenAlarm.cs) with the C# compiler that ships with Windows. If that fails, the browser window takes over.
+On Windows the desktop window comes from a small helper. There is no binary in this repository: at first run it is built from [its source](windows-helper/PageSirenAlarm.cs) with the C# compiler that ships with Windows. If that fails, the browser window takes over. The installer on the [releases page](https://github.com/kerem-alkan/pagesiren/releases/latest) is built from [this source](windows-installer/PageSirenSetup.cs) by GitHub Actions.
 
 Notifications are off until you fill them in under **Notifications** on the dashboard.
 </details>
@@ -218,12 +239,13 @@ Everything lives in one folder. The browser profile in it holds your login cooki
 |---|---|---|
 | `%LOCALAPPDATA%\PageSiren` | `~/Library/Application Support/PageSiren` | `~/.local/share/pagesiren` |
 
-To remove PageSiren: turn off *Start PageSiren when I log in*, quit it (tray icon, or Ctrl+C), delete that folder, and run `npm uninstall -g pagesiren` if you installed it.
+To remove PageSiren on Windows, use **Settings > Apps** like any other program: it asks whether to delete your watches and logins too. If you installed it with npm: turn off *Start PageSiren when I log in*, quit it (tray icon, or Ctrl+C), delete that folder, and run `npm uninstall -g pagesiren`.
 </details>
 
 ## What's next
 
-- [ ] One-click download for Windows, no terminal needed
+- [x] One-click download for Windows, no terminal needed
+- [ ] Code signing, so Windows stops warning
 - [ ] A shorter install: `npx pagesiren`
 - [ ] Chrome Web Store
 - [ ] More languages

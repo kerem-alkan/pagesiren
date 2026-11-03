@@ -8,7 +8,8 @@
 </p>
 
 <p align="center">
-  <a href="#hemen-başlayın"><img alt="Hemen başlayın" src="https://img.shields.io/badge/Hemen%20ba%C5%9Flay%C4%B1n-e2252f?style=for-the-badge"></a>
+  <a href="https://github.com/kerem-alkan/pagesiren/releases/latest/download/PageSiren-Setup.exe"><img alt="Windows için indir" src="https://img.shields.io/badge/Windows%20i%C3%A7in%20indir-e2252f?style=for-the-badge"></a>
+  <a href="#macos-ve-linux"><img alt="macOS ve Linux" src="https://img.shields.io/badge/macOS%20ve%20Linux-2b303b?style=for-the-badge"></a>
   <a href="README.md"><img alt="English" src="https://img.shields.io/badge/English-2b303b?style=for-the-badge"></a>
 </p>
 
@@ -80,7 +81,7 @@ Lütfen makul aralıklar kullanın ve sitelerin kurallarına uyun. Kullanım sor
 | Nerede çalışır | Kendi bilgisayarınızda | Onların sunucusunda | Kendi sunucunuzda ya da ücretli barındırmada |
 | Hesap | Yok | Gerekir | Kendiniz kurarsanız yok |
 | Ücret | Ücretsiz, sınır yok | Ücretsiz katman, sonra aylık | Kendiniz kurarsanız ücretsiz |
-| Kurulum | Tek komut | Üyelik | Docker ya da Python |
+| Kurulum | Tek indirme | Üyelik | Docker ya da Python |
 | Giriş isteyen sayfalar | Bir kez giriş yapmanız yeter | Bazen | Tarayıcı adımlarıyla mümkün |
 | Kaçırılmaz alarm | Kırmızı pencere ve siren | E-posta ya da uygulama bildirimi | Bildirimler |
 
@@ -88,30 +89,37 @@ PageSiren tek kişilik, küçük bir masaüstü aracıdır. Sunucu, ekip, görse
 
 ## Hemen başlayın
 
-[Node.js](https://nodejs.org) (22 veya üstü) ile Chrome, Edge ya da Brave gerekir. Daha önce terminal kullanmadıysanız merak etmeyin, hepsi bu kadar:
+### Windows
 
-1. **Node.js'i kurun.** [nodejs.org](https://nodejs.org) adresinden indirin, kurulumda ileri diyerek geçin.
-2. **Terminali açın.** Windows: Başlat tuşuna basın, `cmd` yazın, Enter'a basın. Mac: *Terminal* uygulamasını açın.
-3. **Şunu yapıştırıp Enter'a basın:**
+1. **[PageSiren-Setup.exe](https://github.com/kerem-alkan/pagesiren/releases/latest/download/PageSiren-Setup.exe) dosyasını indirin** (yaklaşık 35 MB). Gereken her şey içinde.
+2. **Çift tıklayın.** Yönetici izni yok, terminal yok, başka kurulacak bir şey yok.
+3. **Sayfa ekleyin.** Takip ekranı tarayıcınızda açılır. **+ Yeni izleme ekle**'ye basın, sayfa adresini yapıştırın, **Ekle**'ye basın. Hepsi bu.
 
-   ```bash
-   npx --yes https://github.com/kerem-alkan/pagesiren/archive/refs/tags/v0.1.0.tar.gz
-   ```
+> [!NOTE]
+> PageSiren yeni ve henüz kod imzası yok. Bu yüzden tarayıcınız dosyayı tutmak isteyip istemediğinizi sorabilir, Windows da *Windows kişisel bilgisayarınızı korudu* diyebilir. **Ek bilgi**'ye, sonra **Yine de çalıştır**'a basın. [Neden, ve dosyayı nasıl kontrol edersiniz](#windows-kurulumda-neden-uyarı-veriyor).
 
-4. **Sayfa ekleyin.** Takip ekranı tarayıcınızda `http://127.0.0.1:47431/` adresinde açılır. **+ Yeni izleme ekle**'ye basın, sayfa adresini yapıştırın, **Ekle**'ye basın. Hepsi bu.
-
-İzleme sürerken terminal penceresi açık, bilgisayar da uyanık kalmalı.
+Arka planda çalışır, simgesi saatin yanında durur. Bilgisayar yeniden başlayınca da çalışsın diye **Ayarlar**'dan **Oturum açınca PageSiren başlasın** kutusunu işaretleyin. Sayfaları her Windows'ta bulunan Edge ile ya da Chrome veya Brave ile okur.
 
 > [!TIP]
 > **Ayarlar** bölümündeki **Test alarmı çal** düğmesine bir kez basın, sirenin sesini bilin.
 
+### macOS ve Linux
+
+[Node.js](https://nodejs.org) (22 veya üstü) ile Chrome, Edge ya da Brave gerekir. Terminali açın, şunu yapıştırıp Enter'a basın:
+
+```bash
+npx --yes https://github.com/kerem-alkan/pagesiren/archive/refs/tags/v0.1.1.tar.gz
+```
+
+Takip ekranı tarayıcınızda `http://127.0.0.1:47431/` adresinde açılır. İzleme sürerken terminal penceresi açık, bilgisayar da uyanık kalmalı.
+
 Kalıcı kurmak, istediğiniz zaman `pagesiren` yazarak başlatmak için:
 
 ```bash
-npm install -g https://github.com/kerem-alkan/pagesiren/archive/refs/tags/v0.1.0.tar.gz
+npm install -g https://github.com/kerem-alkan/pagesiren/archive/refs/tags/v0.1.1.tar.gz
 ```
 
-Sonra **Ayarlar**'dan **Oturum açınca PageSiren başlasın** kutusunu işaretleyin, bundan sonra kendiliğinden çalışır.
+Sonra **Ayarlar**'dan **Oturum açınca PageSiren başlasın** kutusunu işaretleyin, bundan sonra kendiliğinden çalışır. Bu komutlar isterseniz Windows'ta da çalışır.
 
 ## Sorular
 
@@ -119,6 +127,19 @@ Sonra **Ayarlar**'dan **Oturum açınca PageSiren başlasın** kutusunu işaretl
 <summary><strong>Gerçekten ücretsiz mi?</strong></summary>
 
 Evet. MIT lisanslı, ücretli sürümü yok, sınır yok, hesap yok. Kendi bilgisayarınızda çalışır.
+</details>
+
+<a id="windows-kurulumda-neden-uyarı-veriyor"></a>
+<details>
+<summary><strong>Windows kurulumda neden uyarı veriyor?</strong></summary>
+
+Yeni olduğu ve kod imzası bulunmadığı için, içinde bir şey bulunduğu için değil. Windows, çok kişinin çalıştırmadığı her programda uyarır.
+
+Sözüme güvenmek zorunda değilsiniz. Kurulum dosyası bu açık kaynaktan GitHub Actions ile derlenir, içindeki Node.js de resmî imzalı sürümdür. Dosyayı [sürüm sayfasındaki](https://github.com/kerem-alkan/pagesiren/releases/latest) SHA-256 ile karşılaştırabilir ya da nereden geldiğini kontrol edebilirsiniz:
+
+```bash
+gh attestation verify PageSiren-Setup.exe --repo kerem-alkan/pagesiren
+```
 </details>
 
 <details>
@@ -190,7 +211,7 @@ Takip ekranında ayrıca: **Yeniden nöbet** sayfanın şu anki halini yeni norm
 | Ses | Var | Var |
 | Telefon (isteğe bağlı) | Telegram, Discord, ntfy, webhook | Telegram, Discord, ntfy, webhook |
 
-Windows'taki masaüstü penceresi küçük bir yardımcıdan gelir. Bu depoda hazır exe yoktur: ilk çalıştırmada [kaynağından](windows-helper/PageSirenAlarm.cs) Windows'la gelen C# derleyicisiyle derlenir. Olmazsa tarayıcı penceresi devreye girer.
+Windows'taki masaüstü penceresi küçük bir yardımcıdan gelir. Bu depoda hazır exe yoktur: ilk çalıştırmada [kaynağından](windows-helper/PageSirenAlarm.cs) Windows'la gelen C# derleyicisiyle derlenir. Olmazsa tarayıcı penceresi devreye girer. [Sürümler sayfasındaki](https://github.com/kerem-alkan/pagesiren/releases/latest) kurulum dosyası [bu kaynaktan](windows-installer/PageSirenSetup.cs) GitHub Actions ile derlenir.
 
 Bildirimler, takip ekranındaki **Bildirimler** bölümünü doldurana kadar kapalıdır.
 </details>
@@ -218,12 +239,13 @@ Her şey tek klasörde durur. İçindeki tarayıcı profili giriş çerezleriniz
 |---|---|---|
 | `%LOCALAPPDATA%\PageSiren` | `~/Library/Application Support/PageSiren` | `~/.local/share/pagesiren` |
 
-Kaldırmak için: *Oturum açınca PageSiren başlasın* ayarını kapatın, programı kapatın (saat yanındaki simge ya da Ctrl+C), bu klasörü silin; kurduysanız `npm uninstall -g pagesiren` çalıştırın.
+Windows'ta kaldırmak için diğer programlar gibi **Ayarlar > Uygulamalar**'ı kullanın: izlemeleriniz ve girişleriniz de silinsin mi diye sorar. npm ile kurduysanız: *Oturum açınca PageSiren başlasın* ayarını kapatın, programı kapatın (saat yanındaki simge ya da Ctrl+C), bu klasörü silin ve `npm uninstall -g pagesiren` çalıştırın.
 </details>
 
 ## Sırada ne var
 
-- [ ] Windows için tek tıkla indirme, terminal gerekmeden
+- [x] Windows için tek tıkla indirme, terminal gerekmeden
+- [ ] Kod imzası, Windows uyarmasın diye
 - [ ] Daha kısa kurulum: `npx pagesiren`
 - [ ] Chrome Web Mağazası
 - [ ] Daha fazla dil

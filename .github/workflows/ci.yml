@@ -28,3 +28,10 @@ jobs:
         with:
           node-version: 22
       - run: npm test
+      - run: npm run test:installer
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: alarm-window
+          path: dist/ci-alarm.png
+          if-no-files-found: ignore

@@ -1,0 +1,45 @@
+name: release
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to build again
+        required: true
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+jobs:
+  windows:
+    name: Windows installer
+    runs-on: windows-latest
+    env:
+      TAG: ${{ inputs.tag || github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ env.TAG }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: The bundled runtime must be the official signed Node.js
+        shell: pwsh
+        run: |
+          $s = Get-AuthenticodeSignature (Get-Command node).Source
+          if ($s.Status -ne 'Valid' -or $s.SignerCertificate.Subject -notmatch 'OpenJS') { throw "unexpected signature: $($s.Status) $($s.SignerCertificate.Subject)" }
+      - run: node tools/build-windows.js
+      - run: node test/installer.test.js dist/PageSiren-Setup.exe
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: dist/PageSiren-Setup.exe
+      - name: Publish
+        shell: bash
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/PageSiren-Setup.exe dist/PageSiren-Setup.exe.sha256 --clobber
+          else
+            gh release create "$TAG" dist/PageSiren-Setup.exe dist/PageSiren-Setup.exe.sha256 --title "PageSiren ${TAG#v}" --notes-from-tag
+          fi

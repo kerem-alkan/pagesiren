@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "PageSiren",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Watches the pages you add and raises a siren when something meaningful changes.",
   "homepage_url": "https://github.com/kerem-alkan/pagesiren",
   "permissions": [

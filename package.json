@@ -1,6 +1,6 @@
 {
   "name": "pagesiren",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Free, local page watcher with a siren: tells you only when something meaningful changes, even on pages you must be logged in to see.",
   "license": "MIT",
   "author": "Kerem Alkan <contact@keremalkan.com> (https://github.com/kerem-alkan)",
@@ -18,7 +18,8 @@
   "scripts": {
     "start": "node app/pagesiren.js",
     "test": "node test/unit.test.js && node test/background.test.js && node test/helper.test.js && node test/app.test.js",
-    "test:core": "node test/unit.test.js && node test/background.test.js"
+    "test:core": "node test/unit.test.js && node test/background.test.js",
+    "test:installer": "node test/installer.test.js"
   },
   "engines": {
     "node": ">=22"

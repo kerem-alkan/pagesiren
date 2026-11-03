@@ -50,3 +50,7 @@ To teach it "sold out" in a new language, add the words to `OLUMSUZ` in `extensi
 ## Regenerating the pictures
 
 `node tools/make-assets.js` makes the icon and the siren sound. `node tools/make-demo.js` records `docs/demo.gif`, `docs/screenshot.png` and `docs/alarm.png` with the real program and a fake local shop; add `--lang tr` for the Turkish set. `node tools/make-social.js` makes `docs/social-preview.png`, the picture shown when a link to the repository is shared. Nothing opens on screen.
+
+## The Windows installer
+
+`node tools/build-windows.js` makes `dist/PageSiren-Setup.exe` from [its source](windows-installer/PageSirenSetup.cs), the program and a Node runtime. `npm run test:installer` builds and tests it with no window, no shortcuts and no registry changes. Pushing a `v*` tag builds it on GitHub Actions and publishes it with a release; the tag's message becomes the release notes.
