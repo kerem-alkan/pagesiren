@@ -16,6 +16,7 @@
 <p align="center">
   <a href="https://github.com/kerem-alkan/pagesiren/actions/workflows/ci.yml"><img alt="Testler" src="https://github.com/kerem-alkan/pagesiren/actions/workflows/ci.yml/badge.svg"></a>
   <a href="https://github.com/kerem-alkan/pagesiren/releases/latest"><img alt="Son sürüm" src="https://img.shields.io/github/v/release/kerem-alkan/pagesiren?color=blue"></a>
+  <a href="https://www.npmjs.com/package/pagesiren"><img alt="npm" src="https://img.shields.io/npm/v/pagesiren?color=blue"></a>
   <a href="LICENSE"><img alt="Lisans: MIT" src="https://img.shields.io/badge/license-MIT-green"></a>
   <img alt="Bağımlılık: 0" src="https://img.shields.io/badge/dependencies-0-brightgreen">
   <img alt="Windows, macOS ve Linux'ta çalışır" src="https://img.shields.io/badge/runs_on-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey">
@@ -108,15 +109,15 @@ Arka planda çalışır, simgesi saatin yanında durur. Bilgisayar yeniden başl
 [Node.js](https://nodejs.org) (22 veya üstü) ile Chrome, Edge ya da Brave gerekir. Terminali açın, şunu yapıştırıp Enter'a basın:
 
 ```bash
-npx --yes https://github.com/kerem-alkan/pagesiren/archive/refs/tags/v0.1.1.tar.gz
+npx pagesiren
 ```
 
-Takip ekranı tarayıcınızda `http://127.0.0.1:47431/` adresinde açılır. İzleme sürerken terminal penceresi açık, bilgisayar da uyanık kalmalı.
+Paketi kurmak isteyip istemediğinizi sorarsa `y`'ye basın. Takip ekranı tarayıcınızda `http://127.0.0.1:47431/` adresinde açılır. İzleme sürerken terminal penceresi açık, bilgisayar da uyanık kalmalı.
 
 Kalıcı kurmak, istediğiniz zaman `pagesiren` yazarak başlatmak için:
 
 ```bash
-npm install -g https://github.com/kerem-alkan/pagesiren/archive/refs/tags/v0.1.1.tar.gz
+npm install -g pagesiren
 ```
 
 Sonra **Ayarlar**'dan **Oturum açınca PageSiren başlasın** kutusunu işaretleyin, bundan sonra kendiliğinden çalışır. Bu komutlar isterseniz Windows'ta da çalışır.
@@ -246,7 +247,7 @@ Windows'ta kaldırmak için diğer programlar gibi **Ayarlar > Uygulamalar**'ı 
 
 - [x] Windows için tek tıkla indirme, terminal gerekmeden
 - [ ] Kod imzası, Windows uyarmasın diye
-- [ ] Daha kısa kurulum: `npx pagesiren`
+- [x] Daha kısa kurulum: `npx pagesiren`
 - [ ] Chrome Web Mağazası
 - [ ] Daha fazla dil
 - [ ] macOS ve Linux'tan gerçek kullanım raporları

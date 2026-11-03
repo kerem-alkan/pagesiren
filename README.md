@@ -16,6 +16,7 @@
 <p align="center">
   <a href="https://github.com/kerem-alkan/pagesiren/actions/workflows/ci.yml"><img alt="Tests" src="https://github.com/kerem-alkan/pagesiren/actions/workflows/ci.yml/badge.svg"></a>
   <a href="https://github.com/kerem-alkan/pagesiren/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/kerem-alkan/pagesiren?color=blue"></a>
+  <a href="https://www.npmjs.com/package/pagesiren"><img alt="npm" src="https://img.shields.io/npm/v/pagesiren?color=blue"></a>
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-green"></a>
   <img alt="Dependencies: 0" src="https://img.shields.io/badge/dependencies-0-brightgreen">
   <img alt="Runs on Windows, macOS and Linux" src="https://img.shields.io/badge/runs_on-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey">
@@ -108,15 +109,15 @@ It runs in the background, with an icon next to the clock. Tick **Start PageSire
 You need [Node.js](https://nodejs.org) (version 22 or newer) and Chrome, Edge or Brave. Open a terminal, paste this and press Enter:
 
 ```bash
-npx --yes https://github.com/kerem-alkan/pagesiren/archive/refs/tags/v0.1.1.tar.gz
+npx pagesiren
 ```
 
-The dashboard opens in your browser at `http://127.0.0.1:47431/`. Keep the terminal window open and the computer awake while it watches.
+If it asks whether to install the package, press `y`. The dashboard opens in your browser at `http://127.0.0.1:47431/`. Keep the terminal window open and the computer awake while it watches.
 
 To keep it installed, so you can start it any time by typing `pagesiren`:
 
 ```bash
-npm install -g https://github.com/kerem-alkan/pagesiren/archive/refs/tags/v0.1.1.tar.gz
+npm install -g pagesiren
 ```
 
 Then tick **Start PageSiren when I log in** under **Settings**, and it runs by itself from then on. These commands work on Windows too, if you prefer them.
@@ -246,7 +247,7 @@ To remove PageSiren on Windows, use **Settings > Apps** like any other program: 
 
 - [x] One-click download for Windows, no terminal needed
 - [ ] Code signing, so Windows stops warning
-- [ ] A shorter install: `npx pagesiren`
+- [x] A shorter install: `npx pagesiren`
 - [ ] Chrome Web Store
 - [ ] More languages
 - [ ] Real-world reports from macOS and Linux

@@ -10,7 +10,7 @@
 //        others         -> browser.js (a separate small Chrome; closes when idle)
 //   The alarm window and sound live in PageSirenAlarm.exe on Windows (which also restarts this program if it gets stuck); elsewhere in a browser alarm window.
 //
-// RUN        : node app/pagesiren.js   (or: npx github:kerem-alkan/pagesiren)
+// RUN        : node app/pagesiren.js   (or: npx pagesiren)
 // SCREEN     : http://127.0.0.1:47431/ (same screen as the extension's dashboard.html)
 // DATA       : see veriKlasoru() below: store/ (watches, baselines, alarms), profile/ (reader browser; CONTAINS COOKIES,
 //              must never go into git or a package), notify.json (notification settings), pagesiren.log
