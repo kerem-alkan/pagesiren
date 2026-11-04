@@ -7,6 +7,7 @@ const http = require('http');
 const { Bildirim } = require('../app/notify');
 const otoBaslat = require('../app/autostart');
 const T = require('../extension/i18n');
+const { Tarayici } = require('../app/browser');
 
 const KOK = path.join(__dirname, '..');
 let gecti = 0;
@@ -114,6 +115,29 @@ const bekle = (ms) => new Promise((r) => setTimeout(r, ms));
   ok('English is the source text', T('{n} min', { n: 5 }) === '5 min' && T('Open site') === 'Open site');
   T.dil('de');
   ok('an unknown language falls back to English', T.dil() === 'en');
+
+  console.log('Browser closing: several requests at once leave nothing behind');
+  const gunlukler = [];
+  const tar = new Tarayici({ profil: path.join(dizin, 'profil'), kapanisMs: 60, gunluk: (s) => gunlukler.push(s) });
+  const sahteWs = () => ({ kapandi: 0, close() { this.kapandi++; } });
+  tar.gonder = async () => {};
+  tar.eskiyiBitir = async () => {};
+  tar.ws = sahteWs();
+  tar.kapat('yasli');
+  tar.kapat('yasli');
+  tar.kapat('yasli');
+  tar.kapatIc();
+  ok('one closing for several requests', gunlukler.filter((s) => /closing the browser/.test(s)).length === 1, gunlukler.join(' | '));
+  tar.koptu(); // the browser closed by itself
+  await bekle(10);
+  ok('closing is over once the browser is gone', tar.kapaniyor === null);
+  const sonraki = sahteWs();
+  tar.ws = sonraki; // the next browser has started
+  await bekle(150);
+  ok('no timer left behind cuts the next browser', sonraki.kapandi === 0);
+  tar.kapat('yasli');
+  await bekle(150);
+  ok('a browser that will not close is cut by the timer', sonraki.kapandi === 1 && tar.kapaniyor === null);
 
   console.log('\n' + gecti + ' passed, ' + kaldi + ' failed');
   try { fs.rmSync(dizin, { recursive: true, force: true }); } catch (e) { /* temp folder */ }

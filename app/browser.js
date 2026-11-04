@@ -338,21 +338,27 @@ class Tarayici {
   }
 
   async kapat(neden) {
-    if (!this.ws || this.hedefler.size || this.gorunur.size) return;
+    if (this.kapaniyor || !this.ws || this.hedefler.size || this.gorunur.size) return;
     this.gunluk('closing the browser (' + neden + ')');
     await this.kapatIc();
   }
 
-  async kapatIc() {
-    // No new tabs until closing ends: don't try to open a tab in a half-closed browser
-    this.kapaniyor = new Promise((coz) => { this.kapaniyorCoz = coz; });
-    const zt = setTimeout(() => { if (this.ws) { try { this.ws.close(); } catch (e) { /* harmless */ } } if (this.kapaniyorCoz) this.kapaniyorCoz(); }, 6000);
+  // Every tab that closes checks for idleness again, so several callers can ask at the same moment. There is one closing and one
+  // timer: a timer left behind would fire later and cut the connection of the NEXT browser.
+  // No new tabs until closing ends: don't try to open a tab in a half-closed browser (hazirla waits for this).
+  kapatIc() {
+    if (!this.kapaniyor) this.kapaniyor = this.kapatTekSefer().finally(() => { this.kapaniyor = null; });
+    return this.kapaniyor;
+  }
+
+  async kapatTekSefer() {
+    const kapandi = new Promise((coz) => { this.kapaniyorCoz = coz; });
+    const zt = setTimeout(() => { if (this.ws) { try { this.ws.close(); } catch (e) { /* harmless */ } } if (this.kapaniyorCoz) this.kapaniyorCoz(); }, this.s.kapanisMs || 6000);
     this.gonder('Browser.close', {}, null, 5000).catch(() => {});
-    await this.kapaniyor;
+    await kapandi;
     clearTimeout(zt);
-    await this.eskiyiBitir(8000); // if a new one starts on the same profile before the process has fully exited, it can't open
-    this.kapaniyor = null;
     this.kapaniyorCoz = null;
+    await this.eskiyiBitir(8000); // if a new one starts on the same profile before the process has fully exited, it can't open
   }
 
   // When the program closes: open tabs close, the browser closes
