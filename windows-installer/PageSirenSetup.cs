@@ -246,6 +246,9 @@ static class PageSirenKurulum
         object k = t.InvokeMember("CreateShortcut", BindingFlags.InvokeMethod, null, kabuk, new object[] { yol });
         Type kt = k.GetType();
         kt.InvokeMember("TargetPath", BindingFlags.SetProperty, null, k, new object[] { hedef });
+        // CreateShortcut opens a shortcut that already exists: whatever an older one carried must not stay
+        kt.InvokeMember("Arguments", BindingFlags.SetProperty, null, k, new object[] { "" });
+        kt.InvokeMember("WindowStyle", BindingFlags.SetProperty, null, k, new object[] { 1 });
         kt.InvokeMember("WorkingDirectory", BindingFlags.SetProperty, null, k, new object[] { klasor });
         kt.InvokeMember("Description", BindingFlags.SetProperty, null, k, new object[] { Y("A siren for web pages", "Web sayfaları için bir siren") });
         kt.InvokeMember("Save", BindingFlags.InvokeMethod, null, k, null);

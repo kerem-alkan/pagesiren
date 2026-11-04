@@ -101,10 +101,16 @@ const programArglari = ['--data', veri, '--port', String(PORT), '--helper-port',
     const kayit = () => spawnSync('reg', ['query', ANAHTAR, '/v', 'DisplayVersion'], { encoding: 'utf8' }).stdout || '';
     const anaSaglik = () => fetch('http://127.0.0.1:47431/saglik').then((r) => r.json()).catch(() => null);
     const durum = () => fetch('http://127.0.0.1:47430/durum').then((r) => r.json()).catch(() => null);
+    // Someone who ran it another way first may already have a shortcut with this name
+    const kisayolBetigi = (ic) => spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', "$s = (New-Object -ComObject WScript.Shell).CreateShortcut('" + kisayol + "'); " + ic], { encoding: 'utf8' }).stdout || '';
+    fs.mkdirSync(path.dirname(kisayol), { recursive: true });
+    kisayolBetigi("$s.TargetPath = 'C:\\Windows\\notepad.exe'; $s.Arguments = 'eski-yol'; $s.WindowStyle = 7; $s.Save()");
     const g = calistir(setup, []);
     ok('kurulum penceresi bitti', g.status === 0, g.status);
     ok('program kuruldu', fs.existsSync(path.join(gercek, 'app', 'pagesiren.js')));
     ok('masaustu kisayolu var', fs.existsSync(kisayol));
+    const kisayolBilgi = kisayolBetigi("$s.TargetPath + '|' + $s.Arguments + '|' + $s.WindowStyle").trim();
+    ok('eski kisayol yenilendi, eski ayari kalmadi', kisayolBilgi.toLowerCase().endsWith('pagesiren.exe||1'), kisayolBilgi);
     ok('Uygulamalar listesinde', kayit().includes(surum), kayit());
     ok('program kendiliginden acildi', !!(await bekleKadar(anaSaglik, 30000)));
     ok('alarm yardimcisi calisiyor', !!(await bekleKadar(durum, 30000)));
