@@ -13,9 +13,9 @@
 //   Y| small page fallback (when very little was read)
 //   "|soluk" suffix: disabled / aria-disabled item (not available right now)
 //
-// NOISE (never represented): cookie boxes (OneTrust/Cookiebot/Didomi/Quantcast/Ketch containers are cut out entirely),
-//   FAQ blocks (unless they hold sale items), login/sign-up windows, account/cart links and account names, "Show more"-style UI buttons,
-//   relative times ("3 minutes ago"), address parts with session ids/epochs, plain number changes.
+// NOISE (never represented): cookie boxes (known tools' containers and small boxes named cookie/consent are cut out entirely),
+//   FAQ blocks (unless they hold sale items), login/sign-up windows, account/cart links and account names, empty cart counters,
+//   "Show more"-style UI buttons, relative times ("3 minutes ago"), address parts with session ids/epochs, plain number changes.
 //
 // FLOW: represent(html) -> healthCheck -> turIsle(durum, rep, saglik, sinyal)
 //   turIsle: takes the baseline on the first read; then compare -> confirm (CONFIRMED BY TWO READS IN A ROW) -> applyToBaseline.
@@ -79,17 +79,23 @@
   const DURUM_SOZ = /t[üu]kendi|t[üu]kenmek [üu]zere|sat[ıi][şs]ta|sat[ıi][şs]a (a[çc][ıi]l|[çc][ıi]k)|yak[ıi]nda|bilet al|sat[ıi]n al|uygun bilet|bilet bulunma|son biletler|sold[\s-]?out|on sale|unavailable|not available|available|coming soon|buy now|get tickets|complet|[ée]puis[ée]|indisponible|non disponible|bient[ôo]t|ausverkauft|verf[üu]gbar|demn[äa]chst|εξαντλ|μη διαθ[εέ]σιμ|προσεχ[ωώ]ς|распродан|разпродад|изчерпан|в продаже|нет в наличии|sotuvda|rasprodat|uskoro|esgotad|agotad|esaurit|epuizat|uts[oø]lgt|udsolgt|slutsåld|slutsålt|utsåld|utsålt|tilgjengelig|tillg[äa]nglig|kj[øo]p n[åa]|k[öo]p nu|biljettsl[äa]pp|billettsalg|loppuunmyyty|sem[ _]?disponibilidade|dispon[ií]vel|indispon[ií]vel|^comprar$|daha sonra tekrar dene|sat[ıi][şs]a sunulacak|no results|טרם נפתח|אין מידע עבור האירוע|אזל|לא זמין|אין כרטיסים|המכירה הסתיימה|בקרוב|לרכישה|הוסף לסל|הוספה לסל/i;
 
   // Cookie / consent banner buttons and links.
-  const CEREZ = /[çc]erez|tercihleri y[öo]net|t[üu]m[üu]n[üu] (kabul|reddet)|gizlilik (se[çc]im|tercih|ayar)|kabul ediyorum|cookie|consent|accept all|reject all|manage (preferences|options|cookies)|g[ée]rer (mes|les) (pr[ée]f[ée]rences|choix)|tout accepter|tout refuser|param[èe]tres des cookies|alle akzeptieren|alle ablehnen|einstellungen verwalten|datenschutzeinstellungen|privacy (settings|preferences|choices)|αποδοχ[ηή] [οό]λων|απ[οό]ρριψ[ηή] [οό]λων|^accepteer( alles)?$|^weiger( alles)?$|keuzes opslaan|cookie-?voorkeur|acceptera alla|godk[äa]nn alla|neka alla|accetta tutt[io]|rifiuta tutt[io]|aceptar todo|rechazar todo|aceitar todos|rejeitar todos|zaakceptuj wszystkie|odrzu[ćc] wszystkie|^povolit (v[šs]e|v[ýy]b[ěe]r)$|^odm[íi]tnout$|^souhlas$|nastaven[íi] cookies|v[íi]ce o cookies|^prijat? v[šs]etko$|^odmietnu[ťt]$|tan[ıi]mlama bilgisi|vendor-search|^back button$|^filter button$|^onetrust|^truste/i;
+  const CEREZ = /[çc]erez|tercihleri y[öo]net|t[üu]m[üu]n[üu] (kabul|reddet)|gizlilik (se[çc]im|tercih|ayar)|kabul ediyorum|cookie|consent|accept all|reject all|manage (preferences|options|cookies)|g[ée]rer (mes|les) (pr[ée]f[ée]rences|choix)|tout accepter|tout refuser|param[èe]tres des cookies|alle akzeptieren|alle ablehnen|einstellungen verwalten|datenschutzeinstellungen|privacy (settings|preferences|choices)|αποδοχ[ηή] [οό]λων|απ[οό]ρριψ[ηή] [οό]λων|^accepteer( alles)?$|^weiger( alles)?$|keuzes opslaan|cookie-?voorkeur|acceptera alla|godk[äa]nn alla|neka alla|accetta tutt[io]|rifiuta tutt[io]|aceptar todo|rechazar todo|aceitar todos|rejeitar todos|zaakceptuj wszystkie|odrzu[ćc] wszystkie|^povolit (v[šs]e|v[ýy]b[ěe]r)$|^odm[íi]tnout$|^souhlas$|nastaven[íi] cookies|v[íi]ce o cookies|^prijat? v[šs]etko$|^odmietnu[ťt]$|tan[ıi]mlama bilgisi|vendor-search|^back button$|^filter button$|^onetrust|^truste|קוקיז|קבצי עוגיה|עוגיות|^קבלו הכל$|^אשרו בחירה$|^מובן$|^תצורה$/i;
 
   // Login/sign-up windows and UI noise ("Continue with Google" etc.).
   // Inner texts like "Log in om te bestellen" (in an event row) are NOT dropped: only exact-match button texts.
   const GURULTU = /^continue with (google|facebook|apple|email|phone|apple id)$|^(sign|log) ?in with |^log in or sign up$|^(sign|log) ?(in|up)$|^create (an )?account$|^forgot( your)? password\??$|^show (more|less|all)$|^(load|see) more$|^daha fazla( g[öo]ster)?$|^close$|^kapat$|^schlie[sß]en$|^fermer$|^cerrar$|^sluiten$|^st[äa]ng$|^κλε[ιί]σιμο$|^terms (and|&) conditions$|^terms of (use|service)$|^privacy policy$|^cookie statement$|^kullan[ıi]m ko[şs]ullar[ıi]$|^gizlilik politikas[ıi]$|by (continuing|signing up|logging in|creating an account)[^.]{0,60}agree|agree to (our|the) (terms|privacy)|devam ederek[^.]{0,60}kabul|requires you to identify yourself|sign up or sign in|please use the button below|giri[şs] yapman[ıi]z gerek|^giri[şs] yap$|^[üu]ye ol$|^[çc][ıi]k[ıi][şs]$|^(log|sign) ?out$|^hesab[ıi]m$|^my account$|^המשך$|הסשן שלך|your session (will )?expire|session (has )?expired|session time ?out|oturumunuz(un)? s[üu]resi/i;
 
+  // Top-menu labels that say nothing about a sale. Exact matches only: "In den Warenkorb" and "Add to cart" are sale signals and stay.
+  const MENU_GURULTU = /^(your |my |shopping )?(cart|basket)$|^(mein )?warenkorb$|^(meine )?(wunschliste|merkliste)$|^(my )?wish ?list$|^favou?rites$|^favoriten$|^(mon )?panier$|^(mi )?carrito$|^cesta$|^carrello$|^winkel(wagen|mand(je)?)$|^varukorg$|^handlekurv$|^sepet(im)?$|^favoriler(im)?$|^help$|^yard[ıi]m$|^hilfe$|^aide$|^ayuda$|^ajuda$|^aiuto$|^hjelp$|^hj[äa]lp$|^βο[ήη]θεια$|^עזרה$|^התחברות$|^התנתק$|^הרשמה$|^הצהרת הגנת (ה)?נתונים$/i;
+  // "You are logged in as ...": account information, whatever else the row holds.
+  const GIRISLI_SATIR = /(logged|signed) in as\b|eingeloggt als|angemeldet als|connect[ée]e? en tant que|מחובר\/ת כ/i;
+  // An empty cart or wishlist counter: "0", "(0)", "€ 0,00". Shops often load it late. "0 / € 0,00" is caught part by part below.
+  const BOS_SAYAC = /^[([]?\s*(?:(?:[€$£₺]|eur|usd|gbp|try|tl|nok|sek|dkk|chf)\s*)?0(?:[.,]0{1,2})?(?:\s*(?:[€$£₺]|eur|usd|gbp|try|tl|nok|sek|dkk|chf))?\s*[)\]]?$/i;
+  const gurultuMu = (t) => CEREZ.test(t) || GURULTU.test(t) || MENU_GURULTU.test(t) || GIRISLI_SATIR.test(t) || BOS_SAYAC.test(t);
   // Also recognized in Turkish upper case: JS /i doesn't treat "İ" as "i".
   const tekGurultu = (t) => {
-    if (CEREZ.test(t) || GURULTU.test(t)) return true;
-    const k = String(t).toLocaleLowerCase('tr');
-    return CEREZ.test(k) || GURULTU.test(k);
+    if (gurultuMu(t)) return true;
+    return gurultuMu(String(t).toLocaleLowerCase('tr'));
   };
   const PARCA = /\s*[\/|·•]\s*/;
   // Lines made up only of noise parts like "GİRİŞ YAP / ÜYE OL" are noise too.
@@ -105,7 +111,18 @@
   const HESAP_YOLU = /\/(giri[sş](-yap)?|uye-?giri[sş]i|uye-?ol|uyelik|kay[ıi]t-?ol|[çc][ıi]k[ıi][sş](-yap)?|hesab[ıi]m|hesap|profil(im)?|sepet(im)?|log-?in|sign-?in|log-?out|sign-?out|register|sign-?up|my-?account|account|cart|basket|warenkorb|panier|mein-?konto|mon-?compte)\/?$/i;
   const SATIS_YAZI = /sat[ıi]n al|bilet al|\bbuy\b|kaufen|acheter|comprar|get tickets|add to (cart|basket)/i;
   const yolu = (href) => { try { return new URL(href, 'https://x.invalid/').pathname; } catch (e) { return ''; } };
-  const hesapLinki = (href, t) => !!href && !SKIP_HREF.test(href) && HESAP_YOLU.test(yolu(href)) && !SATIS_YAZI.test(t || '');
+  // The same links on sites with file endings or longer names: /login.aspx, /shop/customerlogin.secure, /myaccount/overview.do
+  const DOSYA_SONU = /\.\w{1,8}(?=\/?$)/;
+  const sonParca = (y) => ((/([^/]+)\/?$/.exec(y) || [])[1] || '').replace(DOSYA_SONU, '');
+  const HESAP_KLASORU = /\/(?:my-?account|mein-?konto|mon-?compte|hesab[ıi]m)\//i;
+  const HESAP_DOSYASI = /^(?:(?:customer|user|account|member|client|kunden|my)[-_]?)?(?:log[-_]?(?:in|on|out|off)|sign[-_]?(?:in|out))$|^(?:my[-_]?)?account[-_]?(?:overview|details|settings)$|^customer[-_]?(?:edit[-_]?)?(?:details|account|profile)$|^(?:wish[-_]?list|wunschliste|merkliste|favou?rites|favoriten|favoriler)$|^bye$/i;
+  const hesapYolu = (y) => HESAP_YOLU.test(y.replace(DOSYA_SONU, '')) || HESAP_KLASORU.test(y) || HESAP_DOSYASI.test(sonParca(y));
+  const hesapLinki = (href, t) => !!href && !SKIP_HREF.test(href) && hesapYolu(yolu(href)) && !SATIS_YAZI.test(t || '');
+  // A logout link or button means the page was read logged in. background.js warns once when it goes away.
+  const CIKIS_DOSYASI = /^(?:(?:customer|user|account|member|client|kunden|my)[-_]?)?(?:log[-_]?(?:out|off)|sign[-_]?out)$|^(?:abmelden|ausloggen|d[ée]connexion|cikis(?:-yap)?|uitloggen|logga-?ut|logg-?ut|cerrar-?sesion|bye)$/i;
+  const CIKIS_YAZI = /^(?:log ?out|log ?off|sign ?out|abmelden|ausloggen|d[ée]connexion|se d[ée]connecter|[çc][ıi]k[ıi][şs]( yap)?|oturumu kapat|uitloggen|logga ut|logg ut|cerrar sesi[oó]n|αποσ[υύ]νδεση|התנתק|התנתקות)$/i;
+  const cikisYazisi = (t) => CIKIS_YAZI.test(t || '') || CIKIS_YAZI.test(String(t || '').toLocaleLowerCase('tr'));
+  const cikisLinki = (href, t) => (!!href && !SKIP_HREF.test(href) && CIKIS_DOSYASI.test(sonParca(yolu(href)))) || cikisYazisi(t);
 
   // The CONTAINER of cookie/consent windows is cut from the HTML entirely (a late-loading OneTrust window
   // can bring ~130 headings/buttons -> false alarm). A word list can't catch every language.
@@ -139,7 +156,18 @@
     }
     return h;
   }
-  const cerezKutusuKes = (h) => kutuKes(h, CEREZ_KUTUSU);
+  // Any language and any tool: a small box whose id or class says cookie or consent. It stays if it holds a sale item or a status word, and
+  // if it is more than a quarter of the page, so a wrapper like class="cookies-accepted" around the content is never cut.
+  const CEREZ_GENEL = /<(?:div|section|aside|dialog)\b[^>]*?\s(?:id|class)\s*=\s*(?:"[^"]*(?:cookie|consent|gdpr)[^"]*"|'[^']*(?:cookie|consent|gdpr)[^']*')/i;
+  const cerezKutusuKes = (h) => {
+    const k = kutuKes(h, CEREZ_KUTUSU);
+    let sayfa = -1;
+    return kutuKes(k, CEREZ_GENEL, (p) => {
+      if (sayfa < 0) sayfa = txt(k).length;
+      const t = txt(p);
+      return t.length <= 2500 && t.length * 4 <= sayfa && !satisOgesiVar(p) && !DURUM_SOZ.test(t);
+    });
+  };
 
   // FAQ blocks are cut too (dozens of question-answer items can come and go at once and change language: repeated false alarms
   // on "every change" watches). It's static help text. So we NEVER MISS anything, exceptions: a box with a sale item (select box, table, form,
@@ -220,21 +248,35 @@
       if (!hesapYazi.size) return false;
       if (hesapYazi.has(t)) return true;
       const p = String(t).split(PARCA).filter(Boolean);
-      return p.length > 1 && p.every((x) => hesapYazi.has(x) || tekGurultu(x));
+      if (p.length > 1 && p.every((x) => hesapYazi.has(x) || tekGurultu(x))) return true;
+      // A menu row that repeats account texts: "Name  Welcome back  Name". Two of them and only a short label left. One is not enough:
+      // "Tickets  Team A - Team B" next to an account link called "Tickets" is real content.
+      let kalan = String(t);
+      let adet = 0;
+      for (const y of hesapYazi) {
+        if (y.length < 3) continue;
+        const parca = kalan.split(y);
+        adet += parca.length - 1;
+        kalan = parca.join(' ');
+      }
+      kalan = kalan.replace(/\s+/g, ' ').trim();
+      return adet >= 2 && kalan.length <= 40 && !DURUM_SOZ.test(kalan) && !SATIS_YAZI.test(kalan);
     };
     const sus = (t) => gurultu(t) || hesapSatiri(t);
 
-    // (a) LINKS
-    re = /<a\b([^>]*)>([\s\S]*?)<\/a\s*>/gi;
-    while ((m = re.exec(h))) {
-      const href = attr(m[1], 'href');
-      const t = scrubText(txt(m[2]));
+    // (a) LINKS. Account texts are collected first: the same name can also sit on a plain "#" link that opens the account menu.
+    let cikisVar = false;
+    const linkler = [...h.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a\s*>/gi)].map((x) => ({ href: attr(x[1], 'href'), t: scrubText(txt(x[2])) }));
+    for (const l of linkler) {
+      if (cikisLinki(l.href, l.t)) cikisVar = true;
+      if (l.t && !gurultu(l.t) && hesapLinki(l.href, l.t)) hesapYazi.add(l.t);
+    }
+    for (const { href, t } of linkler) {
       // A text-less link to another site (sponsor/ad logo, social icon) doesn't count: those keep rotating.
       const yazisizDis = !t && /^(https?:)?\/\//i.test(href);
-      if (gurultu(t)) continue;
-      if (hesapLinki(href, t)) { if (t) hesapYazi.add(t); continue; }
+      if (gurultu(t) || hesapLinki(href, t)) continue;
       if (href && !SKIP_HREF.test(href) && !yazisizDis) add(ids, 'L|' + normHref(href), t || href);
-      if (t) add(text, 'A|' + t.slice(0, 160), t);
+      if (t && !hesapYazi.has(t)) add(text, 'A|' + t.slice(0, 160), t);
     }
 
     // (b) OPTIONS — select boxes with more than 15 options (city/filter lists) are skipped
@@ -264,6 +306,7 @@
     re = /<button\b([^>]*)>([\s\S]*?)<\/button\s*>/gi;
     while ((m = re.exec(h))) {
       const l = scrubText(txt(m[2])) || attr(m[1], 'aria-label') || attr(m[1], 'title');
+      if (cikisYazisi(l)) cikisVar = true;
       if (l && /[\p{L}\p{N}]/u.test(l) && !sus(l)) add(ids, 'B|' + l.slice(0, 120) + (soluk(m[1]) ? SOLUK : ''), l.slice(0, 120));
     }
 
@@ -328,7 +371,7 @@
         if (t.length >= 3 && !gurultu(t)) add(text, 'Y|' + t.slice(0, 160), t);
       }
     }
-    return { ids, text, etiket };
+    return { ids, text, etiket, cikisVar };
   }
 
   const count = (o) => Object.values(o || {}).reduce((a, b) => a + b, 0);

@@ -61,7 +61,7 @@
 
 ## Why PageSiren
 
-- **Few false alarms.** Cookie banners, login pop-ups, FAQ boxes, account names, rotating ads, "3 minutes ago" and plain counters are filtered out, and a change has to survive two reads in a row.
+- **Few false alarms.** Cookie banners, login pop-ups, account menus, empty carts, FAQ boxes, rotating ads, "3 minutes ago" and plain counters are filtered out, and a change has to survive two reads in a row.
 - **It knows which way a change goes.** New content, or a "sold out" that disappears, raises the alarm. Something selling out doesn't wake you up. It recognizes "sold out" in more than 15 languages. Want every change instead? Tick one box.
 - **Pages behind a login work.** It reads with a real browser that keeps its own profile. Press **Open** on a watch, log in once, and later reads stay logged in. If the session drops, it tells you.
 - **Hard to miss.** A blinking red window on top of everything, with a siren. If you want it on your phone too: Telegram, Discord, ntfy or any webhook.
@@ -195,7 +195,7 @@ Windows is what this has been used on every day. macOS and Linux should work but
 | How often | From 30 seconds to 30 minutes. 5 minutes is a kind default. |
 | Words | Alarm only if a change contains one of these words. "Sold out" going away always counts. |
 | Alarm on every change | Turns off the direction rule. |
-| Login check | Text you can only see when logged in. If it disappears, you get told once instead of watching a logged-out page. |
+| Login check | Text you can only see when logged in. If it disappears, you get told once instead of watching a logged-out page. You can leave it empty: a logout link disappearing from the page counts too. |
 | Fast | Alarm on the first read when "sold out" goes away, for things that vanish in a minute. |
 | Keep the tab open | For slow pages that only fill in after a while. |
 | Who reads the page | Separate browser (default), plain HTTP (lightest), or your own Chrome through the extension. |

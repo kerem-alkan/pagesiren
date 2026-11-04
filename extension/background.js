@@ -625,17 +625,16 @@ async function oku(izId, sekmeId, deneme, ilkSayi) {
       x.sonKontrol = Date.now();
       x.oturumSay = (x.oturumSay || 0) + 1;
       x.durum = 'sorun'; x.ozet = T('login required'); x.sorun = OTURUM_UYARI();
+      x.girisliydi = false; x.cikisYok = 0; // this branch tells the user: the logout-link check below must not say it again
       if (x.oturumSay >= 2 && !x.oturumAlarmi) { x.oturumAlarmi = true; oturumAlarmi = true; }
     });
     olay(izId, giriseYonlendi ? 'redirected to a login page (' + kisaAdres(r.url).slice(0, 60) + ')' : 'login text missing (session?)');
-    if (izo && oturumAlarmi) {
-      await alarmVer(izo, [T('SESSION LOST — the page looks logged out; changes behind the login will not show.'),
-        T('Please log in to the site (Open site). Watching continues by itself after you log in.')], ['oturum']);
-    }
+    if (izo && oturumAlarmi) await alarmVer(izo, OTURUM_ALARMI(), ['oturum']);
     await okununcaKapat(izo, sekmeId);
     return;
   }
   let alarm = null;
+  let oturumBitti = false;
   const iz = await izDegistir(izId, async (x) => {
     const anahtar = 'motor_' + x.id;
     const s = M.turIsle((await al(anahtar)) || null, rep, saglik, x.hizli ? { ...ISINMA_SINYAL, hizli: true } : ISINMA_SINYAL);
@@ -647,10 +646,18 @@ async function oku(izId, sekmeId, deneme, ilkSayi) {
     if (s.uyari) { x.durum = 'sorun'; x.sorun = s.uyari; } else if (x.durum !== 'degisti') { x.durum = 'izleniyor'; x.sorun = ''; }
     x.kuyrukAlarmi = false; x.kuyrukBasi = 0; x.botDuvari = false;
     if (x.girisYazisi || x.oturumSay) { x.oturumSay = 0; x.oturumAlarmi = false; } // login text seen / redirect ended: session is in place
+    // WITHOUT girisYazisi: a logout link means this page was read logged in. If it stays gone for two page loads the site logged us out.
+    // Account links aren't compared, so nothing else would say so. One alarm, and watching goes on: the public part can still change.
+    if (rep.cikisVar) { x.girisliydi = true; x.cikisYok = 0; }
+    else if (x.girisliydi && !x.girisYazisi && !saglik && !s.uyari) {
+      x.cikisYok = (x.cikisYok || 0) + 1;
+      if (x.cikisYok >= 2) { x.girisliydi = false; x.cikisYok = 0; oturumBitti = true; }
+    }
     if (s.alarm) alarm = alarmSuz(x, s, (s.durum && s.durum.etiket) || {});
     if (alarm) x.sonAlarmKalkan = alarm.kalkan.slice(0, 200);
   });
   if (!iz) return;
+  if (oturumBitti) await alarmVer(iz, OTURUM_ALARMI(), ['oturum']);
   if (alarm) await alarmVer(iz, alarm.satirlar, alarm.anahtarlar);
   await okununcaKapat(iz, sekmeId);
 }
@@ -664,6 +671,8 @@ const GIRIS_YOLU = /(^|\/)(log-?in|sign-?in|giris|uye-?girisi|anmelden|einloggen
 const BOT_UYARI = () => T('use the "Open" button to open the site and pass the check');
 const KUYRUK_YENILE_MS = 30 * 60e3;
 const OTURUM_UYARI = () => T('SESSION LOST — this page needs a login; without it, changes will not show. Log in to the site (Open site).');
+const OTURUM_ALARMI = () => [T('SESSION LOST — the page looks logged out; changes behind the login will not show.'),
+  T('Please log in to the site (Open site). Watching continues by itself after you log in.')];
 // "add ticket" / "last tickets": a "+ Add ticket" row must count as a sale signal, or it gets absorbed in warm-up.
 const SATIS_SOZ = /sat[ıi]n al|bilet al|buy|acheter|r[ée]serv|kaufen|warenkorb|add to (cart|basket)|add (a )?tickets?|last tickets|get tickets|купить|sotib|kj[øo]p n[åa]|k[öo]p nu|comprar( bilhete)?|αγορ[άα]|לרכישה|הוסף לסל|הוספה לסל|לקופה/i;
 const OLUMSUZ = /t[üu]kendi|t[üu]kenmek|uygun bilet|bilet bulunma|sold[\s-]?out|unavailable|not available|coming soon|yak[ıi]nda|complet|[ée]puis[ée]|indisponible|non disponible|bient[ôo]t|ausverkauft|nicht verf[üu]gbar|demn[äa]chst|εξαντλ|μη διαθ[εέ]σιμ|προσεχ[ωώ]ς|δεν υπ[αά]ρχουν διαθ|распродан|разпродад|изчерпан|нет в наличии|sotuvda yo|rasprodat|uskoro|nema ulaznica|esgotad|agotad|esaurit|nu sunt puse [îi]n v[âa]nzare|epuizat|no tickets? (are |is )?(currently )?(available|found|left)|not currently available|no longer available|couldn['’]t find any tickets|\bno results\b|keine tickets|aucun billet|plus de billets|pas de billets disponibles|\b0 (available|tickets?)\b|got tickets to sell|set up a listing|uts[oø]lgt|udsolgt|slutsåld|slutsålt|utsåld|utsålt|ikke tilgjengelig|ikke tilg[æa]ngelig|ikke (lenger|l[æa]ngere) tilg(jengelig|[æa]ngelig)|inte tillg[äa]nglig|inte l[äa]ngre tillg[äa]nglig|feilside|fejlside|felsida|fehlerseite|error page|page d['’]erreur|hata sayfas|ej tillg[äa]nglig|billettsalget (starter|har ikke)|biljetter sl[äa]pps|loppuunmyyty|sem[ _]?disponibilidade|indispon[ií]vel|sem bilhetes|bilhetes esgotados|daha sonra tekrar dene|sat[ıi][şs]a sunulacak|sat[ıi][şs] ba[şs]lamad[ıi]|טרם נפתח|אין מידע עבור האירוע|אזל|לא זמין|אין כרטיסים|המכירה הסתיימה|בקרוב/i;

@@ -47,7 +47,7 @@ A page becomes a multiset of keys, `"X|text"`. The difference between two reads 
 | `Y` | Fallback lines for very small pages |
 | `…\|soluk` | The same item, disabled |
 
-Never represented: cookie and consent containers (cut out of the HTML entirely), FAQ blocks unless they hold something for sale, login and sign-up windows, account links and account names, UI buttons like *Show more*, relative times, address parts holding session ids, and lines where only a number changed.
+Never represented: cookie and consent containers (known tools, and small boxes named cookie or consent, cut out of the HTML entirely), FAQ blocks unless they hold something for sale, login and sign-up windows, account links and account names, empty cart counters, UI buttons like *Show more*, relative times, address parts holding session ids, and lines where only a number changed.
 
 Keys never depend on the interface language, so switching language doesn't look like a page change.
 
@@ -66,6 +66,7 @@ Keys never depend on the interface language, so switching language doesn't look 
 |---|---|---|
 | Bot check | Orange | No baseline is ever taken from it. Tried again at most every 15 minutes. Nothing is solved; the user presses **Open**. |
 | Login wall | Orange | No baseline. One alarm after two reads. Watching continues by itself after login. |
+| Logged out, no login text set | Normal | A logout link that stays gone for two page loads gives one alarm. Comparing goes on, because account links aren't part of it. |
 | Waiting room | Orange | One alarm. The tab keeps its place in line and retries from time to time. |
 | Not read for long | Gray | A watch that hasn't been read never looks green. |
 | Page suddenly emptied | Orange | The baseline is kept. |

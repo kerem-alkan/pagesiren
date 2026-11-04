@@ -1019,6 +1019,78 @@ const etkinlikSayfasi = (o) => {
   const sinifsiz = '<html><body>' + dolgu + '<div class="faqir"><a href="/x">x</a></div><div class="bassss"><h2>Korunur</h2></div></body></html>';
   ok('"sss" sadece tam kelimeyse sayilir', Gm.represent(sinifsiz).text['H|Korunur'] === 1);
 
+  console.log('31) False alarms seen in real use: logging in and out, an empty cart widget, a help link. The session warning stays');
+  const HESAP_URL = 'https://bilet.ornek.test/shop/etkinlikler';
+  const hesapMenu = (girisli) => (girisli
+    ? '<ul><li><a href="/shop/myaccount/accountoverview.secure">כניסה לתיק לקוח</a></li>'
+      + '<li><a href="/shop/customereditdetails.secure">Test User</a></li><li><a href="/shop/bye">התנתק</a></li>'
+      + '<li><a href="#">Test User</a></li><li>Test User את/ה מחובר/ת כ: Test User כניסה לתיק לקוח</li></ul><h4>Test User</h4>'
+    : '<ul><li><a href="/shop/customerlogin.secure?eventId=5">התחברות</a></li></ul>');
+  const hesapCerez = '<div id="site-bar"><h5>הגדרת קבצי עוגיה</h5><p>אנו משתמשים בטכנולוגיות כגון קוקיז לצורך שיפור חוויית השימוש</p>'
+    + '<a href="/campaign/data-protection">הצהרת הגנת נתונים</a><button>קבלו הכל</button><button>מובן</button><button>תצורה</button><button>אשרו בחירה</button></div>';
+  const uzunMetin = '<p>' + 'Etkinlik bilgisi uzun uzun yazılır. '.repeat(12) + '</p>';
+  const hesapSayfa = (o) => '<html><head><title>Etkinlikler</title></head><body><nav>' + hesapMenu(o.girisli) + '</nav>' + (o.cerez ? hesapCerez : '')
+    + '<main><h1>Team A - Team B</h1><a href="/shop/etkinlik/7">Detay</a>' + uzunMetin + (o.acik ? '<button>הוסף לסל</button>' : '<p>טרם נפתח</p>') + '</main></body></html>';
+  t = kur();
+  c = await t.islem({ tip: 'EKLE', ad: 'Hesap menusu', url: HESAP_URL, aralikSn: 300, herDegisiklik: true });
+  await bekle(20);
+  for (const o of [{ cerez: true }, { cerez: true }, { girisli: true }, { girisli: true }, { girisli: true }]) await t.sayfa(c.id, hesapSayfa(o), HESAP_URL);
+  ok('logging in and accepting the cookie box: no alarm, nothing pending', t.alarmlar().length === 0 && !/onay bekliyor|DEĞİŞİKLİK/.test(t.iz(c.id).ozet), JSON.stringify(t.alarmlar().map((x) => x.satirlar)) + ' ' + t.iz(c.id).ozet);
+  const hesapTaban = Object.keys(t.depo['motor_' + c.id].taban.ids).concat(Object.keys(t.depo['motor_' + c.id].taban.text)).join(' ');
+  ok('account name, account links and cookie box are not in the baseline', !/Test User|התחברות|התנתק|קבלו הכל|מובן|data-protection|accountoverview|customerlogin|קוקיז/.test(hesapTaban), hesapTaban);
+  ok('the page was noticed as logged in', t.iz(c.id).girisliydi === true);
+  await t.sayfa(c.id, hesapSayfa({}), HESAP_URL);
+  ok('logged out, first read: no alarm yet', t.alarmlar().length === 0);
+  await t.sayfa(c.id, hesapSayfa({}), HESAP_URL);
+  ok('logged out, second read: ONE session alarm, the page is not put on hold', t.alarmlar().length === 1 && /OTURUM DÜŞTÜ/.test(t.alarmlar()[0].satirlar[0]) && !(t.iz(c.id).satinAlmaBekle > Date.now()), JSON.stringify(t.alarmlar().map((x) => x.satirlar)));
+  await t.sayfa(c.id, hesapSayfa({}), HESAP_URL);
+  ok('the session alarm does not repeat', (t.depo.alarmlar || []).length === 1);
+  await t.islem({ tip: 'ALARM_KAPAT', alarmId: '*', islem: 'gec' });
+  for (const o of [{ girisli: true }, { girisli: true }]) await t.sayfa(c.id, hesapSayfa(o), HESAP_URL);
+  ok('logging back in: no alarm', t.alarmlar().length === 0, JSON.stringify(t.alarmlar().map((x) => x.satirlar)));
+  for (const o of [{ girisli: true, acik: true }, { girisli: true, acik: true }]) await t.sayfa(c.id, hesapSayfa(o), HESAP_URL);
+  ok('a sale opening still rings', t.alarmlar().length === 1 && t.alarmlar()[0].satirlar.some((s) => /הוסף לסל/.test(s)), JSON.stringify(t.alarmlar().map((x) => x.satirlar)));
+  t = kur();
+  c = await t.islem({ tip: 'EKLE', ad: 'Acik sayfa', url: HESAP_URL, aralikSn: 300 });
+  await bekle(20);
+  for (const o of [{}, {}, {}, {}]) await t.sayfa(c.id, hesapSayfa(o), HESAP_URL);
+  ok('a page never read logged in gets no session alarm', t.alarmlar().length === 0 && !t.iz(c.id).girisliydi);
+
+  const DUKKAN = 'https://dukkan.ornek.test/tickets';
+  const dukkan = (o) => '<html><head><title>Shop</title></head><body><nav><a href="/tickets">Tickets</a><a href="/fans">Fans</a>'
+    + (o.sepet ? '<a href="#" class="cart">0 / € 0,00</a><a href="#" class="wish">0</a><h3>Warenkorb</h3><h3>Wunschliste</h3>' : '')
+    + (o.yardim ? '<a href="https://help.ornek.test/hc/el">Βοήθεια</a>' : '')
+    + '</nav><main><h1>Team A - Team B</h1>' + uzunMetin + (o.acik ? '<button>In den Warenkorb</button>' : '') + '</main></body></html>';
+  t = kur();
+  c = await t.islem({ tip: 'EKLE', ad: 'Dukkan', url: DUKKAN, aralikSn: 300, herDegisiklik: true });
+  await bekle(20);
+  for (const o of [{}, {}, { sepet: true }, { sepet: true }, { sepet: true, yardim: true }, { sepet: true, yardim: true }, {}, {}]) await t.sayfa(c.id, dukkan(o), DUKKAN);
+  ok('an empty cart widget and a help link coming and going: no alarm', t.alarmlar().length === 0, JSON.stringify(t.alarmlar().map((x) => x.satirlar)));
+  for (const o of [{ acik: true }, { acik: true }]) await t.sayfa(c.id, dukkan(o), DUKKAN);
+  ok('"In den Warenkorb" still rings', t.alarmlar().length === 1 && t.alarmlar()[0].satirlar.some((s) => /In den Warenkorb/.test(s)), JSON.stringify(t.alarmlar().map((x) => x.satirlar)));
+
+  const linkAnahtari = (html) => { const r = Gm.represent(html); return Object.keys(r.ids).concat(Object.keys(r.text)).filter((k) => /^[AL]\|/.test(k)); };
+  const menuLinki = (y) => '<a href="' + y + '">Menu item</a>';
+  ok('account addresses with file endings and longer names are menu links', ['/login.aspx', '/shop/customerlogin.secure?eventId=5', '/shop/myaccount/overview.do', '/cart.php', '/user-logout', '/wishlist', '/account-overview'].every((y) => !linkAnahtari(menuLinki(y)).length));
+  ok('addresses that only look like it stay', ['/event/login-lounge', '/account/tickets/resale', '/shop/7', '/blog/cart-wheels', '/byebye'].every((y) => linkAnahtari(menuLinki(y)).includes('A|Menu item')));
+  ok('a sale link on an account address still counts', linkAnahtari('<a href="/login.aspx">Buy tickets</a>').includes('A|Buy tickets'));
+  const satirlar = (html) => Object.keys(Gm.represent(html + uzunMetin).text).filter((k) => /^S\|/.test(k));
+  ok('two account texts in a short row: a menu row', !satirlar('<a href="/my-account">Test User</a><ul><li>Test User hello again Test User</li></ul>').length);
+  ok('one account text in a row: content', satirlar('<a href="/my-account">Tickets</a><ul><li>Tickets Team A - Team B</li></ul>').length === 1);
+  ok('a status word keeps the row', satirlar('<a href="/my-account">Test User</a><ul><li>Test User Sold out Test User</li></ul>').length === 1);
+  ok('sale buttons are not noise', ['In den Warenkorb', 'Add to cart', 'Kaufen'].every((b) => Object.keys(Gm.represent('<button>' + b + '</button>').ids).includes('B|' + b)));
+  ok('only an empty counter is noise', !linkAnahtari('<a href="#">€ 0,00</a>').length && !linkAnahtari('<a href="#">(0)</a>').length && linkAnahtari('<a href="#">€ 5,00</a>').length === 1 && linkAnahtari('<a href="#">10</a>').length === 1);
+  ok('logout is recognized by address and by text', ['<a href="/account/logout"></a>', '<a href="/shop/bye">x</a>', '<a href="/logoff.aspx">x</a>', '<a href="#">Log out</a>', '<a href="#">ÇIKIŞ</a>', '<button>Sign out</button>', '<a href="#">התנתק</a>'].every((h) => Gm.represent(h).cikisVar === true));
+  ok('a login link is not a logout link', !Gm.represent('<a href="/login">Log in</a><a href="/shop/7">Bye bye tour</a>').cikisVar);
+
+  const kes = (ic) => Gm.represent('<html><body>' + dolgu + ic + '<h2>Sonra</h2></body></html>');
+  const kesilen = kes('<div id="site-cookie-bar"><p>Käytämme evästeitä</p><button>Hyväksyn</button></div>');
+  ok('a cookie box in any language is cut by its name', !kesilen.ids['B|Hyväksyn'] && !kesilen.text['P|Käytämme evästeitä'] && kesilen.text['H|Sonra'] === 1);
+  ok('a box named consent with a sale link stays', kes('<div class="consent-tickets"><a href="/al">Buy now</a></div>').text['A|Buy now'] === 1);
+  ok('a box named cookie with a status word stays', kes('<div class="cookie-note"><span>Sold out</span></div>').text['D|Sold out'] === 1);
+  const sarmalanmis = Gm.represent('<html><body><div class="cookies-accepted"><h1>Team A</h1>' + dolgu + '</div><p>Alt bilgi</p></body></html>');
+  ok('a wrapper named cookies around the content is not cut', sarmalanmis.text['H|Team A'] === 1);
+
   console.log('\n' + gecti + ' gecti, ' + kaldi + ' basarisiz');
   process.exit(kaldi ? 1 : 0);
 })();

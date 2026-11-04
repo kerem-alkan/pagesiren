@@ -61,7 +61,7 @@
 
 ## Neden PageSiren
 
-- **Az yanlış alarm.** Çerez pencereleri, giriş kutuları, SSS blokları, hesap adları, dönen reklamlar, "3 dakika önce" yazıları ve sayaçlar elenir. Bir değişiklik arka arkaya iki okumada da görülmelidir.
+- **Az yanlış alarm.** Çerez pencereleri, giriş kutuları, hesap menüleri, boş sepetler, SSS blokları, dönen reklamlar, "3 dakika önce" yazıları ve sayaçlar elenir. Bir değişiklik arka arkaya iki okumada da görülmelidir.
 - **Değişikliğin yönünü bilir.** Yeni bir şey gelirse ya da "tükendi" yazısı kalkarsa alarm verir. Bir şeyin tükenmesi sizi uyandırmaz. "Tükendi"yi 15'ten fazla dilde tanır. Her değişikliği mi istiyorsunuz? Tek kutu.
 - **Giriş isteyen sayfalar çalışır.** Kendi profili olan gerçek bir tarayıcıyla okur. İzlemedeki **Aç** düğmesine basıp bir kez giriş yapın, sonraki okumalar girişli kalır. Oturum düşerse size söyler.
 - **Kaçırılması zor.** Her şeyin üstünde yanıp sönen kırmızı pencere ve siren. Telefona da gelsin isterseniz: Telegram, Discord, ntfy ya da herhangi bir webhook.
@@ -195,7 +195,7 @@ Her gün kullanıldığı yer Windows. macOS ve Linux'ta çalışması beklenir 
 | Ne sıklıkla baksın | 30 saniyeden 30 dakikaya kadar. 5 dakika sitelere karşı nazik bir aralıktır. |
 | Kelimeler | Sadece değişiklikte bu kelimelerden biri geçerse alarm verir. "Tükendi" yazısının kalkması her zaman sayılır. |
 | Her değişiklikte alarm ver | Yön kuralını kapatır. |
-| Giriş kontrolü | Sadece giriş yapınca görünen bir yazı. Kaybolursa, çıkış yapılmış sayfayı izlemek yerine size bir kez söyler. |
+| Giriş kontrolü | Sadece giriş yapınca görünen bir yazı. Kaybolursa, çıkış yapılmış sayfayı izlemek yerine size bir kez söyler. Boş bırakabilirsiniz: sayfadaki çıkış linkinin kaybolması da aynı uyarıyı verir. |
 | Hızlı | "Tükendi" kalkınca ilk okumada alarm verir, bir dakikada biten şeyler için. |
 | Sekmeyi açık tut | Geç dolan yavaş sayfalar için. |
 | Sayfayı kim okusun | Ayrı tarayıcı (varsayılan), düz HTTP (en hafif) ya da eklentiyle kendi Chrome'unuz. |
