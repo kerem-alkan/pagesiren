@@ -1,6 +1,10 @@
 name: publish to npm
-# Started by hand. Needs the NPM_TOKEN secret: a token from the npm account that owns the package name.
+# Runs when a version tag is pushed, or by hand. No token is stored anywhere: npm trusts this workflow file through
+# trusted publishing (package settings on npmjs.com: GitHub Actions, this repository, npm-publish.yml).
+# It needs npm 11.5.1 or newer, which Node 24 ships with, and it adds the provenance signature by itself.
 on:
+  push:
+    tags: ['v*']
   workflow_dispatch:
 permissions:
   contents: read
@@ -15,6 +19,4 @@ jobs:
           node-version: 24
           registry-url: https://registry.npmjs.org
       - run: npm run test:core
-      - run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - run: npm publish
