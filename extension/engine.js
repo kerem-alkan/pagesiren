@@ -156,16 +156,18 @@
     }
     return h;
   }
-  // Any language and any tool: a small box whose id or class says cookie or consent. It stays if it holds a sale item or a status word, and
-  // if it is more than a quarter of the page, so a wrapper like class="cookies-accepted" around the content is never cut.
-  const CEREZ_GENEL = /<(?:div|section|aside|dialog)\b[^>]*?\s(?:id|class)\s*=\s*(?:"[^"]*(?:cookie|consent|gdpr)[^"]*"|'[^']*(?:cookie|consent|gdpr)[^']*')/i;
+  // Any language and any tool: a box whose id or class says cookie or consent. These windows hold tables of cookies and forms of switches, so
+  // those don't keep it. It stays if it holds a buy link or a short status text, and if it is more than a quarter of the page, so a wrapper
+  // like class="cookies-accepted" around the content is never cut.
+  const CEREZ_GENEL = /<(?:div|section|aside|dialog)\b[^>]*?\s(?:id|class)\s*=\s*(?:"[^"]*(?:cookie|consent|gdpr|cc-window)[^"]*"|'[^']*(?:cookie|consent|gdpr|cc-window)[^']*')/i;
+  const durumOgesiVar = (p) => [...p.matchAll(/<(span|div|strong|b|em|small|label|i|mark|font)\b[^>]*>([^<]{1,80})<\/\1\s*>/gi)].some((m) => { const t = txt(m[2]); return t.length <= 70 && DURUM_SOZ.test(t); });
   const cerezKutusuKes = (h) => {
     const k = kutuKes(h, CEREZ_KUTUSU);
     let sayfa = -1;
     return kutuKes(k, CEREZ_GENEL, (p) => {
       if (sayfa < 0) sayfa = txt(k).length;
       const t = txt(p);
-      return t.length <= 2500 && t.length * 4 <= sayfa && !satisOgesiVar(p) && !DURUM_SOZ.test(t);
+      return t.length <= 20000 && t.length * 4 <= sayfa && !satisLinkiVar(p) && !durumOgesiVar(p);
     });
   };
 
@@ -175,8 +177,8 @@
   // The limit is deliberately low: with a "half" limit a list getting a bit shorter could flip the rule on and off between reads.
   const SSS_KUTUSU = /<(?:div|section|ul|dl)\b[^>]*?\s(?:id|class)\s*=\s*(?:"[^"]*(?:faq|\bsss\b|sik-?sorulan)[^"]*"|'[^']*(?:faq|\bsss\b|sik-?sorulan)[^']*')/i;
   const SSS_BASLIK = /faq|\bsss\b|s[ıi]k[çc]a sorulan|frequently asked|h[äa]ufig gestellte|questions fr[ée]quentes|preguntas frecuentes|perguntas frequentes|domande frequenti|veelgestelde vragen|συχν[εέ]ς ερωτ[ηή]σεις/i;
-  const satisOgesiVar = (p) => /<(select|table|form)\b/i.test(p)
-    || [...p.matchAll(/<(a|button)\b[^>]*>([\s\S]*?)<\/\1\s*>/gi)].some((m) => { const t = txt(m[2]); return t.length <= 30 && SATIS_YAZI.test(t) && !/[?;\u037E]$/.test(t); });
+  const satisLinkiVar = (p) => [...p.matchAll(/<(a|button)\b[^>]*>([\s\S]*?)<\/\1\s*>/gi)].some((m) => { const t = txt(m[2]); return t.length <= 30 && SATIS_YAZI.test(t) && !/[?;\u037E]$/.test(t); });
+  const satisOgesiVar = (p) => /<(select|table|form)\b/i.test(p) || satisLinkiVar(p);
   function sssKutusuKes(h) {
     const k = kutuKes(h, SSS_KUTUSU, (p) => !satisOgesiVar(p));
     if (k === h) return h;

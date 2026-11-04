@@ -539,8 +539,15 @@ async function gittiIsle(iz, t, url, simdi) {
       return;
     }
     if (!iz.kuyrukAlarmi) {
-      await izDegistir(iz.id, (x) => { x.kuyrukAlarmi = true; });
-      await alarmVer(iz, [T('A waiting room (queue) page opened — something may be starting!'), T('Tab: {adres}', { adres: kisaAdres(url) })], ['kuyruk:' + host]);
+      // Some sites send visitors through a waiting room on and off all day. The first ring says it; more rings within hours say nothing new.
+      // The page is compared again as soon as it can be read, so a real opening behind the queue still rings.
+      const tekrar = !!iz.kuyrukSonAlarm && simdi - iz.kuyrukSonAlarm < KUYRUK_ALARM_ARA_MS;
+      await izDegistir(iz.id, (x) => {
+        x.kuyrukAlarmi = true;
+        if (tekrar) { x.durum = 'sorun'; x.sorun = T('in a waiting room (queue) — watching continues by itself when your turn comes'); } else x.kuyrukSonAlarm = simdi;
+      });
+      if (tekrar) olay(iz.id, 'waiting room again: no new alarm yet');
+      else await alarmVer(iz, [T('A waiting room (queue) page opened — something may be starting!'), T('Tab: {adres}', { adres: kisaAdres(url) })], ['kuyruk:' + host]);
     }
     return;
   }
@@ -670,6 +677,7 @@ const BOT_YOLU = /softblock|captcha|challenge|blocked|access-denied|cdn-cgi|\/er
 const GIRIS_YOLU = /(^|\/)(log-?in|sign-?in|giris|uye-?girisi|anmelden|einloggen|logga-?in|logg-?inn|connexion|customerlogin|accountlogin)(\/|\.|$)/i;
 const BOT_UYARI = () => T('use the "Open" button to open the site and pass the check');
 const KUYRUK_YENILE_MS = 30 * 60e3;
+const KUYRUK_ALARM_ARA_MS = 6 * 3600e3;
 const OTURUM_UYARI = () => T('SESSION LOST — this page needs a login; without it, changes will not show. Log in to the site (Open site).');
 const OTURUM_ALARMI = () => [T('SESSION LOST — the page looks logged out; changes behind the login will not show.'),
   T('Please log in to the site (Open site). Watching continues by itself after you log in.')];

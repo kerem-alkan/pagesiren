@@ -1091,6 +1091,40 @@ const etkinlikSayfasi = (o) => {
   const sarmalanmis = Gm.represent('<html><body><div class="cookies-accepted"><h1>Team A</h1>' + dolgu + '</div><p>Alt bilgi</p></body></html>');
   ok('a wrapper named cookies around the content is not cut', sarmalanmis.text['H|Team A'] === 1);
 
+  const cerezPenceresi = '<div id="x_cookie_banner_container" class="y-window"><p>Bu site izleme kullanir.</p><ul><li><table><tr><td>_abc</td><td>Saglayici</td><td>Sitzung</td></tr></table></li></ul><form><input name="secim"><button>Kaydet</button></form></div>';
+  const pencereli = kes(cerezPenceresi);
+  ok('a consent window with a table of cookies and a form is cut', !pencereli.text['T|_abc ~ Saglayici ~ Sitzung'] && !pencereli.ids['I|secim'] && !pencereli.ids['B|Kaydet'] && pencereli.text['H|Sonra'] === 1, JSON.stringify(Object.keys(pencereli.text)));
+  ok('the common cookie window class is known by name', !kes('<div class="cc-window cc-banner"><p>Metin burada.</p><button>Tamam</button></div>').ids['B|Tamam']);
+  ok('a table in a box with another name stays', kes('<div class="tickets"><table><tr><td>Kategori 1</td><td>100</td></tr></table></div>').text['T|Kategori 1 ~ 100'] === 1);
+
+  console.log('32) A site that keeps opening a waiting room rings once, not all day');
+  const SIRA_URL = 'https://ornek.test/sira';
+  const SIRA_KUYRUK = 'https://bekle.ornek.test/queue/x';
+  const siraSayfa = (ek) => '<html><head><title>Sira</title></head><body><h1>Team A - Team B</h1><a href="/detay">Detay</a>' + uzunMetin + (ek || '') + '</body></html>';
+  t = kur();
+  c = await t.islem({ tip: 'EKLE', ad: 'Kuyruk gelip gider', url: SIRA_URL, aralikSn: 300 });
+  await bekle(20);
+  for (let i = 0; i < 2; i++) await t.sayfa(c.id, siraSayfa(), SIRA_URL);
+  const siraSekme = t.iz(c.id).sekmeId;
+  t.sekmeler.get(siraSekme).url = SIRA_KUYRUK;
+  await t.tik();
+  ok('first waiting room: alarm', t.alarmlar().length === 1 && /kuyruk/.test(t.alarmlar()[0].satirlar[0]), JSON.stringify(t.alarmlar().map((x) => x.satirlar)));
+  await t.islem({ tip: 'ALARM_KAPAT', alarmId: '*', islem: 'gec' });
+  await t.sayfa(c.id, siraSayfa(), SIRA_URL);
+  t.sekmeler.get(siraSekme).url = SIRA_KUYRUK;
+  await t.tik();
+  ok('it comes back within hours: no alarm, the watch says it is in a queue', t.alarmlar().length === 0 && t.iz(c.id).durum === 'sorun' && /kuyruk|sıra/i.test(t.iz(c.id).sorun), JSON.stringify({ a: t.alarmlar().length, d: t.iz(c.id).durum, s: t.iz(c.id).sorun }));
+  t.sekmeler.get(siraSekme).url = SIRA_URL;
+  await t.sayfa(c.id, siraSayfa(), SIRA_URL);
+  ok('reading again: the orange warning goes away', t.iz(c.id).durum === 'izleniyor', t.iz(c.id).durum);
+  for (let i = 0; i < 2; i++) await t.sayfa(c.id, siraSayfa('<button>Add to cart</button>'), SIRA_URL);
+  ok('a real opening behind the queue still rings', t.alarmlar().length === 1 && t.alarmlar()[0].satirlar.some((s) => /Add to cart/.test(s)), JSON.stringify(t.alarmlar().map((x) => x.satirlar)));
+  await t.islem({ tip: 'ALARM_KAPAT', alarmId: '*', islem: 'gec' });
+  t.depo.izlemeler.find((x) => x.id === c.id).kuyrukSonAlarm = Date.now() - 7 * 3600e3;
+  t.sekmeler.get(siraSekme).url = SIRA_KUYRUK;
+  await t.tik();
+  ok('hours later a waiting room rings again', t.alarmlar().length === 1 && /kuyruk/.test(t.alarmlar()[0].satirlar[0]), JSON.stringify(t.alarmlar().map((x) => x.satirlar)));
+
   console.log('\n' + gecti + ' gecti, ' + kaldi + ' basarisiz');
   process.exit(kaldi ? 1 : 0);
 })();
