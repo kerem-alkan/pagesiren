@@ -472,7 +472,7 @@ function saglikKontrol() {
 const SUNULAN = { '/dashboard.js': 'text/javascript; charset=utf-8', '/i18n.js': 'text/javascript; charset=utf-8', '/icon.png': 'image/png', '/siren.wav': 'audio/wav', '/manifest.json': 'application/json' };
 // Requests only the app can answer: the dashboard hides them in the extension.
 const UYGULAMA_ISTEKLERI = {
-  APP_DURUM: async () => ({ tarayici: CHROME_YOLU ? path.basename(CHROME_YOLU) : '', alarm: YARDIMCI_VAR ? 'helper' : 'browser', otoBaslat: otoBaslat.durum(), bildirim: bildirim.ekranIcin() }),
+  APP_DURUM: async () => ({ tarayici: CHROME_YOLU ? path.basename(CHROME_YOLU) : '', alarm: YARDIMCI_VAR ? 'helper' : 'browser', otoBaslat: otoBaslat.durum(VERI), bildirim: bildirim.ekranIcin() }),
   APP_BILDIRIM_KAYDET: async (m) => ({ ok: true, bildirim: bildirim.kaydet(m.ayar || {}) }),
   APP_BILDIRIM_TEST: async (m) => bildirim.testEt(String(m.kanal)),
   APP_OTOBASLAT: async (m) => otoBaslat.ayarla(!!m.acik, { exe: YARDIMCI_EXE, node: process.execPath, uygulama: __filename, veri: VERI, port: UI_PORT }),

@@ -29,10 +29,19 @@ function linuxIcerik(o) {
   return '[Desktop Entry]\nType=Application\nName=PageSiren\nExec=' + [o.node, o.uygulama, '--no-open', '--data', o.veri, '--port', String(o.port)].map(t).join(' ') + '\nX-GNOME-Autostart-enabled=true\n';
 }
 
-function durum() {
+// Is start-at-login on for THIS data folder? A value written by another copy (a test, a second copy with its own folder) is not ours:
+// the box must not show it ticked, and unticking it must not delete it.
+function durum(veri) {
   try {
-    if (process.platform === 'win32') { execFileSync('reg', ['query', RUN, '/v', ADI], { windowsHide: true, stdio: 'pipe' }); return true; }
-    return fs.existsSync(process.platform === 'darwin' ? macDosyasi() : linuxDosyasi());
+    if (process.platform === 'win32') {
+      const cikti = execFileSync('reg', ['query', RUN, '/v', ADI], { windowsHide: true, stdio: 'pipe' }).toString();
+      return veri == null || cikti.toLowerCase().includes(('--data "' + veri + '"').toLowerCase());
+    }
+    const dosya = process.platform === 'darwin' ? macDosyasi() : linuxDosyasi();
+    if (!fs.existsSync(dosya)) return false;
+    if (veri == null) return true;
+    const s = fs.readFileSync(dosya, 'utf8');
+    return s.includes(veri) || s.includes(xml(veri));
   } catch (e) { return false; }
 }
 
@@ -41,14 +50,14 @@ function ayarla(acik, o) {
     if (process.platform === 'win32') {
       if (acik && !o.exe) return { hata: 'the alarm helper could not be built' };
       if (acik) execFileSync('reg', ['add', RUN, '/v', ADI, '/t', 'REG_SZ', '/d', windowsKomutu(o), '/f'], { windowsHide: true, stdio: 'pipe' });
-      else if (durum()) execFileSync('reg', ['delete', RUN, '/v', ADI, '/f'], { windowsHide: true, stdio: 'pipe' });
+      else if (durum(o.veri)) execFileSync('reg', ['delete', RUN, '/v', ADI, '/f'], { windowsHide: true, stdio: 'pipe' });
       return { ok: true, acik };
     }
     const dosya = process.platform === 'darwin' ? macDosyasi() : linuxDosyasi();
     if (acik) {
       fs.mkdirSync(path.dirname(dosya), { recursive: true });
       fs.writeFileSync(dosya, process.platform === 'darwin' ? macIcerik(o) : linuxIcerik(o));
-    } else if (fs.existsSync(dosya)) fs.unlinkSync(dosya);
+    } else if (durum(o.veri)) fs.unlinkSync(dosya);
     return { ok: true, acik };
   } catch (e) { return { hata: String(e && e.message || e).slice(0, 120) }; }
 }
