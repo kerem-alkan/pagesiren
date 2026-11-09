@@ -40,7 +40,7 @@ Usage: pagesiren [options]
   --port <n>       Dashboard port (default 47431)
   --data <folder>  Where watches, the browser profile and logs are kept
   --chrome <path>  Chrome, Edge or Brave to use (default: found automatically)
-  --lang <en|tr>   Interface language (default: the dashboard setting, then your system)
+  --lang <code>    Interface language: en, tr, de or es (default: the dashboard setting, then your system)
   --no-open        Don't open the dashboard when starting
   --no-helper      Windows: use the browser alarm window instead of the desktop helper
   --version        Show the version
@@ -557,6 +557,7 @@ sunucu.listen(UI_PORT, '127.0.0.1', () => {
   fs.writeFileSync(path.join(VERI, 'pagesiren.pid'), String(process.pid));
   pidYazildi = true;
   gunluk('started: version ' + manifest.version + ', pid ' + process.pid + ', ' + (depo.oku('izlemeler') || []).filter((x) => x.aktif).length + ' active watches');
+  if (otoBaslat.tazele({ exe: YARDIMCI_EXE, node: process.execPath, uygulama: __filename, veri: VERI, port: UI_PORT })) gunluk('start at login now points to this copy');
   vm.runInThisContext(fs.readFileSync(path.join(EKLENTI, 'background.js'), 'utf8'), { filename: 'background.js' });
   yardimciyiBaslat();
   if (EKRANI_AC) { process.stdout.write('PageSiren is running: ' + UI_KOKEN + '/   (Ctrl+C to quit)\n'); ekraniAc('/'); }

@@ -693,6 +693,15 @@ function alarmSuz(iz, s, etiket) {
   const yoksay = new Set(iz.yoksay || []);
   const c = { added: s.alarm.confirmed.added.filter((k) => !yoksay.has(k)), removed: s.alarm.confirmed.removed.filter((k) => !yoksay.has(k)) };
   if (!c.added.length && !c.removed.length) return null;
+  // An event whose day has come dropping off a list is not news, even on "every change" watches. Its link and heading go with it:
+  // a removed item whose text sits inside such a dated text.
+  const yazisi = (k) => String((etiket && etiket[k]) || k.slice(2)).replace(/\|soluk$/, '');
+  const gecmisler = c.removed.filter((k) => M.gecmisTarihli(yazisi(k)));
+  if (gecmisler.length) {
+    const metinler = gecmisler.map(yazisi);
+    c.removed = c.removed.filter((k) => !gecmisler.includes(k) && !(yazisi(k).length >= 12 && metinler.some((m) => m.includes(yazisi(k)))));
+    if (!c.added.length && !c.removed.length) return null;
+  }
   // Direction in counted texts: if the same pattern's number dropped to ZERO, like "1 available • 0 sold" -> "0 available • 0 sold",
   // that is a SELL-OUT signal, not an opening (the counter resets when the last listing sells).
   const kalip = (k) => k.replace(/\d+/g, '#');

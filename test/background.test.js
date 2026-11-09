@@ -1125,6 +1125,31 @@ const etkinlikSayfasi = (o) => {
   await t.tik();
   ok('hours later a waiting room rings again', t.alarmlar().length === 1 && /kuyruk/.test(t.alarmlar()[0].satirlar[0]), JSON.stringify(t.alarmlar().map((x) => x.satirlar)));
 
+  console.log('33) An event whose day has come dropping off a list is not news');
+  const DOKUZ_KASIM = new Date(2026, 10, 9, 15, 0).getTime();
+  const gecmis = (y) => Gm.gecmisTarihli(y, DOKUZ_KASIM);
+  ok('dates in many forms are read', ['04/11/2026 Team A', '4.11.26 Team A', '2026-11-04', '4 Kas 2026 20:00', 'Nov 4, 2026', '4. November 2026', '4 de noviembre de 2026', 'søndag 9 nov 2026 17:00'].every(gecmis), ['04/11/2026 Team A', '4.11.26 Team A', '2026-11-04', '4 Kas 2026 20:00', 'Nov 4, 2026', '4. November 2026', '4 de noviembre de 2026', 'søndag 9 nov 2026 17:00'].filter((y) => !gecmis(y)).join(' | '));
+  ok('future dates and texts without a date are not', !['10/11/2026 Team A', '13 des 2026', 'Dec 1, 2026', 'Season 2026-27', 'Kickoff 17:00', 'Version 1.2.3', ''].some(gecmis), ['10/11/2026 Team A', '13 des 2026', 'Dec 1, 2026', 'Season 2026-27', 'Kickoff 17:00', 'Version 1.2.3', ''].filter(gecmis).join(' | '));
+  ok('"12/01/2026" could be 1 December: it does not count as gone', !gecmis('12/01/2026') && gecmis('25/10/2026') && gecmis('10/25/2026'));
+  ok('a range counts as gone only when its last day has come', !gecmis('01/11/2026 - 30/11/2026') && gecmis('01/11/2026 - 09/11/2026'));
+  const gunYazisi = (n) => { const d = new Date(Date.now() + n * 864e5); return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear(); };
+  const LISTE_URL = 'https://ornek.test/etkinlikler';
+  const listeSayfa = (satirlar) => '<html><head><title>Etkinlikler</title></head><body><h1>Etkinlikler</h1>' + uzunMetin + '<ul>'
+    + satirlar.map((s) => '<li><a href="/e/' + s.id + '">' + s.tarih + ' ' + s.ad + '</a><h3>' + s.ad + '</h3></li>').join('') + '</ul></body></html>';
+  const dun = { id: 1, tarih: gunYazisi(-1), ad: 'Team A - Team B Cup Round' };
+  const haftaya = { id: 2, tarih: gunYazisi(7), ad: 'Team C - Team D Cup Round' };
+  const sonraki = { id: 3, tarih: gunYazisi(14), ad: 'Team E - Team F Cup Round' };
+  t = kur();
+  c = await t.islem({ tip: 'EKLE', ad: 'Liste', url: LISTE_URL, aralikSn: 300, herDegisiklik: true });
+  await bekle(20);
+  for (const s of [[dun, haftaya], [dun, haftaya], [haftaya], [haftaya]]) await t.sayfa(c.id, listeSayfa(s), LISTE_URL);
+  ok('yesterday\'s event dropping off: no alarm on an "every change" watch', t.alarmlar().length === 0, JSON.stringify(t.alarmlar().map((x) => x.satirlar)));
+  for (const s of [[haftaya, sonraki], [haftaya, sonraki]]) await t.sayfa(c.id, listeSayfa(s), LISTE_URL);
+  ok('a new event still rings', t.alarmlar().length === 1 && t.alarmlar()[0].satirlar.some((x) => /Team E/.test(x)), JSON.stringify(t.alarmlar().map((x) => x.satirlar)));
+  await t.islem({ tip: 'ALARM_KAPAT', alarmId: '*', islem: 'gec' });
+  for (const s of [[sonraki], [sonraki]]) await t.sayfa(c.id, listeSayfa(s), LISTE_URL);
+  ok('a future event dropping off still rings', t.alarmlar().length === 1 && t.alarmlar()[0].satirlar.some((x) => /Team C/.test(x)), JSON.stringify(t.alarmlar().map((x) => x.satirlar)));
+
   console.log('\n' + gecti + ' gecti, ' + kaldi + ' basarisiz');
   process.exit(kaldi ? 1 : 0);
 })();

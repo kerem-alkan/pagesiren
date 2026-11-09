@@ -32,8 +32,9 @@ function yardimciHazirla(veri, surum, gunluk) {
     gunluk('helper: build failed, using the browser alarm window: ' + String(e && e.stdout || e && e.message || e).slice(0, 300));
     return null;
   }
+  // Only older helpers go; helper.log stays, it is the record of what happened before the update.
   for (const f of fs.readdirSync(klasor)) {
-    if (f !== path.basename(exe)) { try { fs.unlinkSync(path.join(klasor, f)); } catch (e) { /* still running: next time */ } }
+    if (/^PageSirenAlarm-.+\.exe$/i.test(f) && f !== path.basename(exe)) { try { fs.unlinkSync(path.join(klasor, f)); } catch (e) { /* still running: next time */ } }
   }
   return exe;
 }

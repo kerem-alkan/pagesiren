@@ -53,4 +53,32 @@ function ayarla(acik, o) {
   } catch (e) { return { hata: String(e && e.message || e).slice(0, 120) }; }
 }
 
-module.exports = { durum, ayarla, windowsKomutu, macIcerik, linuxIcerik };
+// Rewrite only a value that belongs to this data folder and differs from what would be written now.
+const tazelenmeli = (eski, yeni, isaret) => !!eski && eski !== yeni && String(eski).toLowerCase().includes(String(isaret).toLowerCase());
+
+// At every start: if start-at-login is on for THIS data folder but points to another copy (an older helper exe after an update, or an
+// npm copy after the installer), it is rewritten to point here. The old helper exe is deleted at a later update, and the computer would
+// then start nothing. A value for another data folder (a test, a second copy) is left alone. Returns true if something changed.
+function tazele(o) {
+  try {
+    if (process.platform === 'win32') {
+      if (!o.exe) return false;
+      const cikti = execFileSync('reg', ['query', RUN, '/v', ADI], { windowsHide: true, stdio: 'pipe' }).toString();
+      const m = /\sREG_SZ\s+(.+?)\s*$/m.exec(cikti);
+      if (!m) return false;
+      const yeni = windowsKomutu(o);
+      if (!tazelenmeli(m[1], yeni, '--data "' + o.veri + '"')) return false;
+      execFileSync('reg', ['add', RUN, '/v', ADI, '/t', 'REG_SZ', '/d', yeni, '/f'], { windowsHide: true, stdio: 'pipe' });
+      return true;
+    }
+    const dosya = process.platform === 'darwin' ? macDosyasi() : linuxDosyasi();
+    if (!fs.existsSync(dosya)) return false;
+    const eski = fs.readFileSync(dosya, 'utf8');
+    const yeni = process.platform === 'darwin' ? macIcerik(o) : linuxIcerik(o);
+    if (!tazelenmeli(eski, yeni, o.veri) && !tazelenmeli(eski, yeni, xml(o.veri))) return false;
+    fs.writeFileSync(dosya, yeni);
+    return true;
+  } catch (e) { return false; }
+}
+
+module.exports = { durum, ayarla, tazele, tazelenmeli, windowsKomutu, macIcerik, linuxIcerik };

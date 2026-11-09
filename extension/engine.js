@@ -600,9 +600,52 @@
     return { ids, text, etiket };
   }
 
+  // --------------------------------------------------------------- dates in a text
+  // "04/11/2026", "4.11.26", "2026-11-04", "4 Kas 2026", "Nov 4, 2026", "14. November 2026", "13 de noviembre de 2026", "søndag 13 des 2026".
+  // A month name is known by its first letters in the languages PageSiren meets most.
+  const AY = {
+    jan: 0, oca: 0, ene: 0, gen: 0, feb: 1, şub: 1, sub: 1, fév: 1, fev: 1, mar: 2, mär: 2, mrt: 2, apr: 3, nis: 3, abr: 3, avr: 3,
+    may: 4, mai: 4, mag: 4, mei: 4, jun: 5, haz: 5, giu: 5, jul: 6, tem: 6, lug: 6, aug: 7, ağu: 7, agu: 7, ago: 7, aoû: 7, aou: 7,
+    sep: 8, eyl: 8, set: 8, oct: 9, okt: 9, eki: 9, ott: 9, out: 9, nov: 10, kas: 10, dec: 11, dez: 11, dic: 11, déc: 11, ara: 11, des: 11,
+  };
+  const ayNo = (ad) => { const a = String(ad).toLocaleLowerCase('tr'); if (/^juin/.test(a)) return 5; if (/^juil/.test(a)) return 6; const n = AY[a.slice(0, 3)]; return n == null ? -1 : n; };
+  const yil = (y) => (String(y).length === 2 ? 2000 + Number(y) : Number(y));
+  const gunSayisi = (y, a, g) => (a >= 0 && a <= 11 && g >= 1 && g <= 31 ? y * 10000 + (a + 1) * 100 + g : -1);
+  // Each date found, as yyyymmdd. "12/01/2026" can be the 12th of January or the 1st of December: the LATER one is taken, so a date only
+  // counts as gone when both readings are.
+  function tarihler(yazi) {
+    const s = String(yazi || '');
+    const bulunan = [];
+    let m;
+    const sayili = /(?<![\d.\/-])(\d{1,2})[./-](\d{1,2})[./-](\d{4}|\d{2})(?![\d.\/-])/g;
+    while ((m = sayili.exec(s))) {
+      const y = yil(m[3]);
+      const a = Number(m[1]);
+      const b = Number(m[2]);
+      const okumalar = [gunSayisi(y, b - 1, a), gunSayisi(y, a - 1, b)].filter((x) => x > 0);
+      if (okumalar.length) bulunan.push(Math.max(...okumalar));
+    }
+    const iso = /(?<!\d)(\d{4})-(\d{2})-(\d{2})(?!\d)/g;
+    while ((m = iso.exec(s))) { const x = gunSayisi(Number(m[1]), Number(m[2]) - 1, Number(m[3])); if (x > 0) bulunan.push(x); }
+    const HARF = 'a-zçğıöşüäåæøéèêëûôîàáíóúñ';
+    const gunAy = new RegExp('(?<!\\d)(\\d{1,2})\\.?\\s+(?:de\\s+)?([' + HARF + ']{3,})\\.?,?\\s+(?:de\\s+)?(\\d{4})(?!\\d)', 'gi');
+    while ((m = gunAy.exec(s))) { const x = gunSayisi(Number(m[3]), ayNo(m[2]), Number(m[1])); if (x > 0) bulunan.push(x); }
+    const ayGun = new RegExp('(?<![' + HARF + '])([' + HARF + ']{3,})\\.?\\s+(\\d{1,2}),?\\s+(\\d{4})(?!\\d)', 'gi');
+    while ((m = ayGun.exec(s))) { const x = gunSayisi(Number(m[3]), ayNo(m[1]), Number(m[2])); if (x > 0) bulunan.push(x); }
+    return bulunan;
+  }
+  // True if the text holds dates and all of them are today or earlier: an event whose day has come.
+  function gecmisTarihli(yazi, simdi) {
+    const t = tarihler(yazi);
+    if (!t.length) return false;
+    const d = new Date(simdi == null ? Date.now() : simdi);
+    const bugun = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+    return t.every((x) => x <= bugun);
+  }
+
   const API = {
     represent, compare, confirm, applyToBaseline, healthCheck, collapsed, birlestir, turIsle,
-    alarmSatirlari, itemCount, cerezKutusuKes, sssKutusuKes, DURUM_SOZ, CEREZ, GURULTU,
+    alarmSatirlari, itemCount, cerezKutusuKes, sssKutusuKes, DURUM_SOZ, CEREZ, GURULTU, tarihler, gecmisTarihli,
   };
   if (typeof self !== 'undefined') self.GENEL_MOTOR = API;
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
