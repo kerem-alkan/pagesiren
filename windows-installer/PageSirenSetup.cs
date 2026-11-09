@@ -30,8 +30,9 @@ static class PageSirenKurulum
     const int UI_PORT = 47431;
     const string KALDIR_ANAHTARI = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\PageSiren";
     const string CALISTIR_ANAHTARI = @"Software\Microsoft\Windows\CurrentVersion\Run";
-    static readonly bool tr = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "tr";
-    static string Y(string en, string trMetin) { return tr ? trMetin : en; }
+    static string DilSec(string d) { d = (d ?? "").ToLowerInvariant(); return d == "tr" || d == "de" || d == "es" ? d : "en"; }
+    static readonly string dil = DilSec(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
+    static string Y(string en, string trMetin, string deMetin, string esMetin) { return dil == "tr" ? trMetin : dil == "de" ? deMetin : dil == "es" ? esMetin : en; }
 
     [STAThread]
     static int Main(string[] args)
@@ -60,7 +61,7 @@ static class PageSirenKurulum
         catch (Exception e)
         {
             if (sessiz) Console.Error.WriteLine(e.Message);
-            else MessageBox.Show(Y("Something went wrong:\n\n", "Bir sorun çıktı:\n\n") + e.Message, AD, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            else MessageBox.Show(Y("Something went wrong:\n\n", "Bir sorun çıktı:\n\n", "Etwas ist schiefgegangen:\n\n", "Algo salió mal:\n\n") + e.Message, AD, MessageBoxButtons.OK, MessageBoxIcon.Error);
             return 1;
         }
     }
@@ -135,7 +136,7 @@ static class PageSirenKurulum
         f.ClientSize = new Size(420, 90);
         try { f.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch (Exception) { /* the default icon will do */ }
         Label yazi = new Label();
-        yazi.Text = Y("Installing PageSiren...", "PageSiren kuruluyor...");
+        yazi.Text = Y("Installing PageSiren...", "PageSiren kuruluyor...", "PageSiren wird installiert...", "Instalando PageSiren...");
         yazi.SetBounds(16, 14, 388, 24);
         ProgressBar cubuk = new ProgressBar();
         cubuk.SetBounds(16, 46, 388, 22);
@@ -155,7 +156,7 @@ static class PageSirenKurulum
                     Yukle(paket, dizin, entegrasyonsuz, delegate(double oran) { f.BeginInvoke(new Action(delegate { cubuk.Value = (int)(oran * 1000); })); });
                     if (!entegrasyonsuz)
                     {
-                        f.BeginInvoke(new Action(delegate { yazi.Text = Y("Starting PageSiren...", "PageSiren başlatılıyor..."); cubuk.Style = ProgressBarStyle.Marquee; }));
+                        f.BeginInvoke(new Action(delegate { yazi.Text = Y("Starting PageSiren...", "PageSiren başlatılıyor...", "PageSiren wird gestartet...", "Iniciando PageSiren..."); cubuk.Style = ProgressBarStyle.Marquee; }));
                         ProgramiBaslat(dizin, new List<string>());
                         for (int i = 0; i < 80 && !Cevapliyor(); i++) Thread.Sleep(250); // the first start also builds the alarm helper
                     }
@@ -250,7 +251,7 @@ static class PageSirenKurulum
         kt.InvokeMember("Arguments", BindingFlags.SetProperty, null, k, new object[] { "" });
         kt.InvokeMember("WindowStyle", BindingFlags.SetProperty, null, k, new object[] { 1 });
         kt.InvokeMember("WorkingDirectory", BindingFlags.SetProperty, null, k, new object[] { klasor });
-        kt.InvokeMember("Description", BindingFlags.SetProperty, null, k, new object[] { Y("A siren for web pages", "Web sayfaları için bir siren") });
+        kt.InvokeMember("Description", BindingFlags.SetProperty, null, k, new object[] { Y("A siren for web pages", "Web sayfaları için bir siren", "Eine Sirene für Webseiten", "Una sirena para páginas web") });
         kt.InvokeMember("Save", BindingFlags.InvokeMethod, null, k, null);
     }
 
@@ -259,10 +260,10 @@ static class PageSirenKurulum
     {
         // Deleting a whole folder: only one that really is a PageSiren install
         if (!File.Exists(Path.Combine(dizin, AD + ".exe")) || !File.Exists(Path.Combine(dizin, "app", "pagesiren.js")))
-            throw new InvalidOperationException(Y("This folder is not a PageSiren install: ", "Bu klasör bir PageSiren kurulumu değil: ") + dizin);
-        if (!sessiz && MessageBox.Show(Y("Remove PageSiren from this computer?", "PageSiren bu bilgisayardan kaldırılsın mı?"), AD, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return 0;
+            throw new InvalidOperationException(Y("This folder is not a PageSiren install: ", "Bu klasör bir PageSiren kurulumu değil: ", "Dieser Ordner ist keine PageSiren-Installation: ", "Esta carpeta no es una instalación de PageSiren: ") + dizin);
+        if (!sessiz && MessageBox.Show(Y("Remove PageSiren from this computer?", "PageSiren bu bilgisayardan kaldırılsın mı?", "PageSiren von diesem Computer entfernen?", "¿Quitar PageSiren de este ordenador?"), AD, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return 0;
         bool veriyiSil = !sessiz && MessageBox.Show(
-            Y("Also delete your watches and saved logins?\n\nChoose No to keep them for a later install.", "İzlemeleriniz ve kayıtlı girişleriniz de silinsin mi?\n\nSonra yeniden kurarsanız kalsın istiyorsanız Hayır'ı seçin."),
+            Y("Also delete your watches and saved logins?\n\nChoose No to keep them for a later install.", "İzlemeleriniz ve kayıtlı girişleriniz de silinsin mi?\n\nSonra yeniden kurarsanız kalsın istiyorsanız Hayır'ı seçin.", "Auch deine Beobachtungen und gespeicherten Anmeldungen löschen?\n\nWähle Nein, um sie für eine spätere Installation zu behalten.", "¿Borrar también tus vigilancias e inicios de sesión guardados?\n\nElige No para conservarlos para una instalación posterior."),
             AD, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
         if (!entegrasyonsuz)
         {
@@ -275,7 +276,7 @@ static class PageSirenKurulum
         {
             string veri = Path.Combine(YerelKlasor(), AD);
             try { if (Directory.Exists(veri)) Directory.Delete(veri, true); }
-            catch (Exception) { MessageBox.Show(Y("Your data could not be deleted completely: ", "Verileriniz tamamen silinemedi: ") + veri, AD); }
+            catch (Exception) { MessageBox.Show(Y("Your data could not be deleted completely: ", "Verileriniz tamamen silinemedi: ", "Deine Daten konnten nicht vollständig gelöscht werden: ", "No se pudieron borrar todos tus datos: ") + veri, AD); }
         }
         // This exe is inside the folder, so a small command finishes the job after it has closed.
         ProcessStartInfo b = new ProcessStartInfo("cmd.exe", "/c ping -n 4 127.0.0.1 >nul & rmdir /s /q \"" + dizin.TrimEnd('\\') + "\"");

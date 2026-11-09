@@ -24,8 +24,8 @@ const UYGULAMA = !!window.__PAGESIREN_APP;
 
 const RENK = { izleniyor: 'var(--yesil)', hazirlaniyor: 'var(--gri)', duraklatildi: 'var(--gri)', sorun: 'var(--turuncu)', degisti: 'var(--kirmizi)' };
 const ARALIKLAR = [30, 60, 120, 180, 300, 600, 1800];
-const aralikAdi = (sn) => (sn < 60 ? T('{n} s', { n: sn }) : T('{n} min', { n: String(sn / 60).replace('.', T.dil() === 'tr' ? ',' : '.') }));
-const saat = (z) => { try { return new Date(z).toLocaleString(T.dil() === 'tr' ? 'tr-TR' : undefined); } catch (e) { return z; } };
+const aralikAdi = (sn) => (sn < 60 ? T('{n} s', { n: sn }) : T('{n} min', { n: String(sn / 60).replace('.', T.dil() === 'en' ? '.' : ',') }));
+const saat = (z) => { try { return new Date(z).toLocaleString(T.dil() === 'en' ? undefined : T.dil()); } catch (e) { return z; } };
 const DURUM_ADI = { yeni: 'OPEN', aldim: 'done', yanlis: 'false alarm', gec: 'dismissed', yoksay: 'ignored', tamam: 'closed' };
 
 let kilitli = false; // while the user is editing, a redraw must not make the screen jump
@@ -52,6 +52,9 @@ async function ciz() {
   if (!d || d.hata) return;
   if (d.dil && d.dil !== T.dil() || ilkCizim) { T.dil(d.dil); metinleriCevir(); }
   $('#surum').textContent = T('version {v}', { v: d.surum || '?' });
+  // open alarms show in the tab title too, for a dashboard left in a background tab
+  const acikAlarm = (d.alarmlar || []).filter((a) => a.durum === 'yeni').length;
+  document.title = (acikAlarm ? '(' + acikAlarm + ') ' : '') + 'PageSiren';
 
   const ust = $('#ustbar');
   const aktif = d.izlemeler.filter((x) => x.aktif);
@@ -168,6 +171,7 @@ function izlemeKarti(x) {
     const o = el('option', null, aralikAdi(sn)); o.value = sn; if (Number(x.aralikSn) === sn) o.selected = true;
     sec.appendChild(o);
   }
+  sec.setAttribute('aria-label', T('How often to check?'));
   sec.onchange = () => { sec.blur(); gonder({ tip: 'GUNCELLE', id: x.id, aralikSn: Number(sec.value) }); };
   const sag = el('div', 'sag');
   sag.appendChild(sec);
@@ -195,6 +199,7 @@ function izlemeKarti(x) {
   return k;
 }
 
+let etiketSayac = 0;
 function duzenle(kart, x) {
   kilitli = true;
   const d = el('div', 'kart');
@@ -207,8 +212,10 @@ function duzenle(kart, x) {
   const her = girdi('checkbox', x.herDegisiklik);
   const hizli = girdi('checkbox', x.hizli);
   const kalici = girdi('checkbox', x.kaliciSekme);
-  d.append(el('label', null, T('Name')), ad, el('label', null, T('Address')), url, el('label', null, T('Words (comma-separated)')), kel,
-    el('label', null, T('Login check: text you can only see when logged in (optional)')), giris,
+  // each label points at its box, so screen readers say what the box is for
+  const etiket = (yazi, kutu) => { kutu.id = 'd_' + x.id + '_' + (++etiketSayac); const l = el('label', null, yazi); l.htmlFor = kutu.id; return l; };
+  d.append(etiket(T('Name'), ad), ad, etiket(T('Address'), url), url, etiket(T('Words (comma-separated)'), kel), kel,
+    etiket(T('Login check: text you can only see when logged in (optional)'), giris), giris,
     isaret(her, T('Alarm on every change')), isaret(hizli, T('Fast: alarm on the first read when a "sold out" text goes away')), isaret(kalici, T('Keep the tab open between reads (for slow pages)')));
   let okuyucu = null;
   if (UYGULAMA) {
@@ -216,7 +223,7 @@ function duzenle(kart, x) {
     for (const [v, y] of [['', 'Separate browser (handles JavaScript and logins)'], ['http', 'Plain HTTP (lightest, no JavaScript)'], ['eklenti', 'My Chrome extension (Windows, extension installed)']]) {
       const o = el('option', null, T(y)); o.value = v; if ((x.okuyucu || '') === v) o.selected = true; okuyucu.appendChild(o);
     }
-    d.append(el('label', null, T('Who reads the page')), okuyucu);
+    d.append(etiket(T('Who reads the page'), okuyucu), okuyucu);
   }
   const sr = el('div', 'satir'); sr.style.marginTop = '10px';
   const kaydet = el('button', 'ana', T('Save'));
@@ -310,8 +317,8 @@ function bildirimleriCiz(ayar) {
     const sr = el('div', 'ikili');
     for (const [a, y] of alanlar) {
       const c = el('div');
-      const l = el('label', null, T(y));
       const i = el('input'); i.type = 'text'; i.id = 'b_' + k + '_' + a; i.value = (ayar[k] && ayar[k][a]) || ''; i.autocomplete = 'off';
+      const l = el('label', null, T(y)); l.htmlFor = i.id;
       c.append(l, i);
       sr.appendChild(c);
     }

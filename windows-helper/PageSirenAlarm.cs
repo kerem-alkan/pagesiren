@@ -43,8 +43,9 @@ using System.Windows.Forms;
 static class Program
 {
     static Control ui;
-    static bool tr;
-    public static string Y(string en, string trMetin) { return tr ? trMetin : en; }
+    static string dil = "en";
+    public static string Y(string en, string trMetin, string deMetin, string esMetin) { return dil == "tr" ? trMetin : dil == "de" ? deMetin : dil == "es" ? esMetin : en; }
+    static string DilSec(string d) { d = (d ?? "").ToLowerInvariant(); return d == "tr" || d == "de" || d == "es" ? d : "en"; }
     static AlarmPenceresi pencere;
     static bool testModu;
     static string klasor = AppDomain.CurrentDomain.BaseDirectory;
@@ -71,7 +72,7 @@ static class Program
     {
         testModu = Array.IndexOf(args, "--test") >= 0;
         string dilSec = Secenek(args, "--lang");
-        tr = dilSec != null ? dilSec == "tr" : System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "tr";
+        dil = DilSec(dilSec ?? System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName);
         int port = 47430;
         int pi = Array.IndexOf(args, "--port");
         if (pi >= 0 && pi + 1 < args.Length) int.TryParse(args[pi + 1], out port);
@@ -289,8 +290,8 @@ static class Program
                     uyarildi = true;
                     Kaydet("WATCHDOG: no summary for " + (long)yas + " s");
                     Dictionary<string, object> d = new Dictionary<string, object>();
-                    d["ad"] = Y("PageSiren: WATCHING STOPPED", "PageSiren: TAKİP DURDU");
-                    d["satirlar"] = new object[] { ((long)yas / 60) + Y(" minutes without any word from the watch program. You may miss alarms!", " dakikadır takip programından haber yok. Alarm gelmeyebilir!"), Y("Trying to restart it; if this window comes back, check the dashboard.", "Yeniden başlatmayı deniyorum; bu pencere tekrar gelirse takip ekranına bakın.") };
+                    d["ad"] = Y("PageSiren: WATCHING STOPPED", "PageSiren: TAKİP DURDU", "PageSiren: BEOBACHTUNG GESTOPPT", "PageSiren: VIGILANCIA DETENIDA");
+                    d["satirlar"] = new object[] { ((long)yas / 60) + Y(" minutes without any word from the watch program. You may miss alarms!", " dakikadır takip programından haber yok. Alarm gelmeyebilir!", " Minuten ohne Nachricht vom Beobachtungsprogramm. Alarme können ausbleiben!", " minutos sin noticias del programa de vigilancia. ¡Podrías perderte alarmas!"), Y("Trying to restart it; if this window comes back, check the dashboard.", "Yeniden başlatmayı deniyorum; bu pencere tekrar gelirse takip ekranına bakın.", "Ich versuche, es neu zu starten; kommt dieses Fenster wieder, sieh im Dashboard nach.", "Intento reiniciarlo; si esta ventana vuelve a aparecer, revisa el panel.") };
                     d["url"] = "http://127.0.0.1:" + uiPort + "/";
                     d["ses"] = true;
                     d["sesSn"] = 60;
@@ -421,8 +422,8 @@ static class Program
             simge.Icon = Icon.FromHandle(bm.GetHicon());
             simge.Text = "PageSiren";
             ContextMenuStrip menu = new ContextMenuStrip();
-            menu.Items.Add(Y("Open the dashboard", "Takip ekranını aç"), null, delegate { EkranAc(); });
-            menu.Items.Add(Y("Quit PageSiren", "PageSiren'i kapat"), null, delegate { Cikis(); });
+            menu.Items.Add(Y("Open the dashboard", "Takip ekranını aç", "Dashboard öffnen", "Abrir el panel"), null, delegate { EkranAc(); });
+            menu.Items.Add(Y("Quit PageSiren", "PageSiren'i kapat", "PageSiren beenden", "Salir de PageSiren"), null, delegate { Cikis(); });
             simge.ContextMenuStrip = menu;
             simge.MouseClick += delegate (object s, MouseEventArgs e) { if (e.Button == MouseButtons.Left) EkranAc(); };
             simge.Visible = true;
@@ -431,7 +432,7 @@ static class Program
             zaman.Tick += delegate
             {
                 double yas = Math.Min(Yas(Interlocked.Read(ref ozetMiniTik)), Yas(Interlocked.Read(ref ozetEklentiTik)));
-                string m = yas == double.MaxValue ? Y("PageSiren: starting", "PageSiren: başlıyor") : yas > 120 ? Y("PageSiren: NO WORD (", "PageSiren: HABER YOK (") + (long)(yas / 60) + Y(" min)", " dk)") : "PageSiren: " + (aktifSayi >= 0 ? aktifSayi + Y(" watches, ", " izleme, ") : "") + Y("running", "çalışıyor");
+                string m = yas == double.MaxValue ? Y("PageSiren: starting", "PageSiren: başlıyor", "PageSiren: startet", "PageSiren: iniciando") : yas > 120 ? Y("PageSiren: NO WORD (", "PageSiren: HABER YOK (", "PageSiren: KEINE NACHRICHT (", "PageSiren: SIN NOTICIAS (") + (long)(yas / 60) + Y(" min)", " dk)", " Min.)", " min)") : "PageSiren: " + (aktifSayi >= 0 ? aktifSayi + Y(" watches, ", " izleme, ", " Beobachtungen, ", " vigilancias, ") : "") + Y("running", "çalışıyor", "läuft", "funcionando");
                 simge.Text = m.Length > 63 ? m.Substring(0, 63) : m;
             };
             zaman.Start();
@@ -457,7 +458,7 @@ static class Program
         try
         {
             string dilGelen = Yazi(d, "dil");
-            if (dilGelen != "") tr = dilGelen == "tr";
+            if (dilGelen != "") dil = DilSec(dilGelen);
             if (pencere == null || pencere.IsDisposed) pencere = new AlarmPenceresi();
             pencere.Ekle(Yazi(d, "ad"), satirlar, Yazi(d, "url"), ses, sesSn);
             Kaydet("alarm shown: " + Yazi(d, "ad"));
@@ -519,11 +520,11 @@ class AlarmPenceresi : Form
 
     void Etiketle()
     {
-        lblBaslik.Text = Program.Y("PAGESIREN ALARM", "SAYFA ALARMI");
-        btnAc.Text = Program.Y("Open site", "Siteyi aç");
-        btnSes.Text = Program.Y("Mute", "Sesi kapat");
-        btnKapat.Text = Program.Y("Close", "Kapat");
-        btnEkran.Text = Program.Y("Dashboard", "Takip ekranı");
+        lblBaslik.Text = Program.Y("PAGESIREN ALARM", "SAYFA ALARMI", "PAGESIREN-ALARM", "ALARMA DE PAGESIREN");
+        btnAc.Text = Program.Y("Open site", "Siteyi aç", "Seite öffnen", "Abrir sitio");
+        btnSes.Text = Program.Y("Mute", "Sesi kapat", "Stumm", "Silenciar");
+        btnKapat.Text = Program.Y("Close", "Kapat", "Schließen", "Cerrar");
+        btnEkran.Text = Program.Y("Dashboard", "Takip ekranı", "Dashboard", "Panel");
     }
 
     void Buton(Button b, int x, EventHandler tik)
@@ -541,8 +542,8 @@ class AlarmPenceresi : Form
         url = adres;
         lblAd.Text = ad;
         lblSatirlar.Text = string.Join("\n", satirlar.GetRange(0, Math.Min(6, satirlar.Count)).ToArray());
-        lblDiger.Text = DateTime.Now.ToString("HH:mm:ss") + (adlar.Count > 1 ? "   ·   " + Program.Y("Other alarms: ", "Diğer alarmlar: ") + string.Join(", ", adlar.GetRange(1, Math.Min(4, adlar.Count - 1)).ToArray()) : "")
-            + "\n" + Program.Y("Details and the 'Done / False alarm' buttons are on the dashboard (button at top right).", "Ayrıntılar ve 'Tamam / Yanlış alarm' düğmeleri takip ekranında (sağ üstteki düğme).");
+        lblDiger.Text = DateTime.Now.ToString("HH:mm:ss") + (adlar.Count > 1 ? "   ·   " + Program.Y("Other alarms: ", "Diğer alarmlar: ", "Weitere Alarme: ", "Otras alarmas: ") + string.Join(", ", adlar.GetRange(1, Math.Min(4, adlar.Count - 1)).ToArray()) : "")
+            + "\n" + Program.Y("Details and the 'Done / False alarm' buttons are on the dashboard (button at top right).", "Ayrıntılar ve 'Tamam / Yanlış alarm' düğmeleri takip ekranında (sağ üstteki düğme).", "Details und die Schaltflächen „Erledigt / Fehlalarm“ sind im Dashboard (Schaltfläche oben rechts).", "Los detalles y los botones «Hecho / Falsa alarma» están en el panel (botón arriba a la derecha).");
         if (sesCal) SesCal(sesSn);
         if (!Visible) Show();
         WindowState = FormWindowState.Normal;

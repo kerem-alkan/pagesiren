@@ -249,6 +249,7 @@ To remove PageSiren on Windows, use **Settings > Apps** like any other program: 
 - [ ] Code signing, so Windows stops warning
 - [x] A shorter install: `npx pagesiren`
 - [ ] Chrome Web Store
+- [x] German and Spanish
 - [ ] More languages
 - [ ] Real-world reports from macOS and Linux
 

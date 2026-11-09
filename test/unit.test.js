@@ -92,6 +92,11 @@ const bekle = (ms) => new Promise((r) => setTimeout(r, ms));
   const u = { node: '/usr/bin/node', uygulama: '/home/a b/app/pagesiren.js', veri: '/home/a b/d', port: 47431 };
   ok('macOS LaunchAgent', /<string>\/home\/a b\/app\/pagesiren\.js<\/string>/.test(otoBaslat.macIcerik(u)) && /<string>--no-open<\/string>/.test(otoBaslat.macIcerik(u)) && /RunAtLoad/.test(otoBaslat.macIcerik(u)));
   ok('Linux desktop file', /^Exec="\/usr\/bin\/node" "\/home\/a b\/app\/pagesiren\.js" "--no-open"/m.test(otoBaslat.linuxIcerik(u)));
+  const eskiYardimci = otoBaslat.windowsKomutu({ ...o, exe: 'C:\\d e\\helper\\PageSirenAlarm-0.1.3.exe' });
+  ok('after an update, start-at-login of this data folder moves to the new helper', otoBaslat.tazelenmeli(eskiYardimci, otoBaslat.windowsKomutu(o), '--data "C:\\d e"'));
+  ok('a value that is already right is left alone', !otoBaslat.tazelenmeli(otoBaslat.windowsKomutu(o), otoBaslat.windowsKomutu(o), '--data "C:\\d e"'));
+  ok('a value for another data folder is left alone', !otoBaslat.tazelenmeli(eskiYardimci, otoBaslat.windowsKomutu(o), '--data "C:\\baska"'));
+  ok('an npm copy moving to the installed one on macOS is refreshed', otoBaslat.tazelenmeli(otoBaslat.macIcerik({ ...u, uygulama: '/tmp/npx/pagesiren.js' }), otoBaslat.macIcerik(u), u.veri));
 
   console.log('3) Translations: every text on screen has a Turkish version');
   const metinler = new Set();
@@ -107,14 +112,30 @@ const bekle = (ms) => new Promise((r) => setTimeout(r, ms));
     'OPEN', 'done', 'false alarm', 'dismissed', 'ignored', 'closed', ' · alarm helper is running', ' · alarm: red desktop window', ' · alarm: browser window',
     'read without a browser', 'read by the Chrome extension', 'Bot token', 'Chat ID', 'Webhook address', 'Server', 'Topic', 'Address',
     'Separate browser (handles JavaScript and logins)', 'Plain HTTP (lightest, no JavaScript)', 'My Chrome extension (Windows, extension installed)'].forEach((m) => metinler.add(m));
+  for (const dil of ['tr', 'de', 'es']) {
+    T.dil(dil);
+    const eksik = [...metinler].filter((m) => !T.ceviriVar(m));
+    ok(metinler.size + ' texts are all translated (' + dil + ')', eksik.length === 0, eksik.join(' | '));
+    const bozuk = [...metinler].filter((m) => (m.match(/\{\w+\}/g) || []).sort().join() !== (T(m).match(/\{\w+\}/g) || []).sort().join());
+    ok('every {placeholder} is kept (' + dil + ')', bozuk.length === 0, bozuk.join(' | '));
+  }
   T.dil('tr');
-  const eksik = [...metinler].filter((m) => !T.ceviriVar(m));
-  ok(metinler.size + ' texts are all translated', eksik.length === 0, eksik.join(' | '));
   ok('parameters are filled', T('{n} min', { n: 5 }) === '5 dk');
+  T.dil('de');
+  ok('German is used when chosen', T('Open site') === 'Seite öffnen');
+  T.dil('es');
+  ok('Spanish is used when chosen', T('Open site') === 'Abrir sitio');
   T.dil('en');
   ok('English is the source text', T('{n} min', { n: 5 }) === '5 min' && T('Open site') === 'Open site');
-  T.dil('de');
+  T.dil('xx');
   ok('an unknown language falls back to English', T.dil() === 'en');
+  const panel = fs.readFileSync(path.join(KOK, 'extension', 'dashboard.html'), 'utf8');
+  ok('every language can be picked on the dashboard', ['en', 'tr', 'de', 'es'].every((d) => panel.includes('<option value="' + d + '">')));
+  for (const cs of ['windows-helper/PageSirenAlarm.cs', 'windows-installer/PageSirenSetup.cs']) {
+    const kaynak = fs.readFileSync(path.join(KOK, cs), 'utf8');
+    const tekDil = [...kaynak.matchAll(/\bY\(("(?:[^"\\]|\\.)*"(?:\s*,\s*"(?:[^"\\]|\\.)*")*)\)/g)].filter((m) => (m[1].match(/"(?:[^"\\]|\\.)*"/g) || []).length !== 4);
+    ok(path.basename(cs) + ': every text has English, Turkish, German and Spanish', tekDil.length === 0, tekDil.map((m) => m[1].slice(0, 60)).join(' | '));
+  }
 
   console.log('Browser closing: several requests at once leave nothing behind');
   const gunlukler = [];

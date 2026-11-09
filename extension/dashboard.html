@@ -10,7 +10,7 @@
   @media (prefers-color-scheme: dark) { :root { --yesil:#66bb6a; --turuncu:#ffa726; --kirmizi:#ef5350; --zemin:#14161a; --kart:#1d2025; --yazi:#e8eaed; --soluk:#a3a9b3; --cizgi:#30343b; --dugme:#262a30; --dugme2:#2f343b; --bilgi:#17281a; --bilgiCizgi:#2b4a30; --uyari:#2e2415; --uyariCizgi:#6b4e1c; --alarm:#2e1719; --alarmCizgi:#7d2f33; } }
   * { box-sizing:border-box; }
   body { max-width:980px; margin:0 auto; padding:18px 18px 60px; font:15px/1.45 "Segoe UI",system-ui,-apple-system,sans-serif; color:var(--yazi); background:var(--zemin); }
-  header { display:flex; align-items:center; gap:12px; }
+  header { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
   h1 { font-size:22px; margin:0; line-height:1.1; }
   h2 { font-size:16px; margin:22px 0 8px; display:flex; align-items:center; gap:10px; }
   h3 { font-size:14px; margin:14px 0 2px; }
@@ -21,7 +21,7 @@
   .alarm .baslik { font-weight:600; color:var(--kirmizi); font-size:16px; }
   .satir { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
   .nokta { width:11px; height:11px; border-radius:50%; flex:0 0 auto; }
-  .ad { font-weight:600; flex:1 1 320px; min-width:220px; word-break:break-word; }
+  .ad { font-weight:600; flex:1 1 220px; min-width:0; word-break:break-word; }
   .ozet { color:var(--soluk); font-size:13px; margin-top:3px; word-break:break-word; }
   .sorun { color:var(--turuncu); font-size:13px; margin-top:3px; word-break:break-word; }
   button { font:inherit; color:inherit; padding:5px 11px; border-radius:7px; border:1px solid var(--cizgi); background:var(--dugme); cursor:pointer; }
@@ -30,9 +30,11 @@
   button.ana:hover { filter:brightness(1.08); }
   button.ikincil { background:var(--dugme2); }
   button.kucukBtn { font-size:13px; font-weight:400; }
-  select, input[type=text], input[type=url], input[type=password] { font:inherit; color:inherit; background:var(--kart); padding:5px 8px; border:1px solid var(--cizgi); border-radius:7px; }
+  select, input[type=text], input[type=url], input[type=password], input[type=number] { font:inherit; color:inherit; background:var(--kart); padding:5px 8px; border:1px solid var(--cizgi); border-radius:7px; }
   input[type=text], input[type=url], input[type=password] { width:100%; }
   label { font-size:13px; color:var(--soluk); display:block; margin:8px 0 3px; }
+  label.dilEtiket { display:inline; margin:0; }
+  button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-visible, a:focus-visible { outline:2px solid var(--kirmizi); outline-offset:2px; }
   .kucuk { font-size:13px; color:var(--soluk); }
   .kucuk a { color:inherit; }
   .ikili { display:flex; gap:12px; flex-wrap:wrap; }
@@ -50,8 +52,8 @@
     <img src="icon.png" width="36" height="36" alt="">
     <div><h1>PageSiren</h1><div class="kucuk"><span id="surum"></span> · <a href="https://github.com/kerem-alkan/pagesiren" target="_blank" rel="noopener">Kerem Alkan</a></div></div>
     <div class="sag">
-      <span class="kucuk" data-t="Language">Language</span>
-      <select id="a_dil"><option value="" data-t="Automatic">Automatic</option><option value="en">English</option><option value="tr">Türkçe</option></select>
+      <label for="a_dil" class="kucuk dilEtiket" data-t="Language">Language</label>
+      <select id="a_dil"><option value="" data-t="Automatic">Automatic</option><option value="en">English</option><option value="tr">Türkçe</option><option value="de">Deutsch</option><option value="es">Español</option></select>
     </div>
   </header>
   <div class="ustbar" id="ustbar" data-t="loading…">loading…</div>
@@ -65,21 +67,21 @@
     <summary data-t="+ Add a page to watch">+ Add a page to watch</summary>
     <div class="kart">
       <div class="ikili">
-        <div><label data-t="Name (e.g. New drop page)">Name (e.g. New drop page)</label><input type="text" id="y_ad"></div>
-        <div><label data-t="Page address (https://…)">Page address (https://…)</label><input type="url" id="y_url"></div>
+        <div><label for="y_ad" data-t="Name (e.g. New drop page)">Name (e.g. New drop page)</label><input type="text" id="y_ad"></div>
+        <div><label for="y_url" data-t="Page address (https://…)">Page address (https://…)</label><input type="url" id="y_url"></div>
       </div>
       <div class="ikili">
-        <div><label data-t="How often to check?">How often to check?</label><select id="y_aralik"></select></div>
-        <div><label data-t="Alarm only if these words appear (comma-separated, optional)">Alarm only if these words appear (comma-separated, optional)</label><input type="text" id="y_kelime"></div>
+        <div><label for="y_aralik" data-t="How often to check?">How often to check?</label><select id="y_aralik"></select></div>
+        <div><label for="y_kelime" data-t="Alarm only if these words appear (comma-separated, optional)">Alarm only if these words appear (comma-separated, optional)</label><input type="text" id="y_kelime"></div>
       </div>
       <label><input type="checkbox" id="y_her"> <span data-t="Alarm on every change">Alarm on every change</span></label>
       <details>
         <summary data-t="More options">More options</summary>
-        <label data-t="Login check: text you can only see when logged in (optional)">Login check: text you can only see when logged in (optional)</label><input type="text" id="y_giris">
+        <label for="y_giris" data-t="Login check: text you can only see when logged in (optional)">Login check: text you can only see when logged in (optional)</label><input type="text" id="y_giris">
         <label><input type="checkbox" id="y_hizli"> <span data-t='Fast: alarm on the first read when a "sold out" text goes away'>Fast: alarm on the first read when a "sold out" text goes away</span></label>
         <label><input type="checkbox" id="y_kalici"> <span data-t="Keep the tab open between reads (for slow pages)">Keep the tab open between reads (for slow pages)</span></label>
         <div class="sadeceUygulama" hidden>
-          <label data-t="Who reads the page">Who reads the page</label>
+          <label for="y_okuyucu" data-t="Who reads the page">Who reads the page</label>
           <select id="y_okuyucu">
             <option value="" data-t="Separate browser (handles JavaScript and logins)">Separate browser (handles JavaScript and logins)</option>
             <option value="http" data-t="Plain HTTP (lightest, no JavaScript)">Plain HTTP (lightest, no JavaScript)</option>
@@ -99,7 +101,7 @@
     <div class="kart">
       <label><input type="checkbox" id="a_ustte"> <span data-t="Show the red alarm window">Show the red alarm window</span></label>
       <label><input type="checkbox" id="a_ses"> <span data-t="Play the alarm sound with it">Play the alarm sound with it</span></label>
-      <label><span data-t="Sound length (seconds)">Sound length (seconds)</span> <input type="text" id="a_sesSn" style="width:80px"></label>
+      <label><span data-t="Sound length (seconds)">Sound length (seconds)</span> <input type="number" id="a_sesSn" min="1" max="600" step="1" style="width:90px"></label>
       <label><input type="checkbox" id="a_hafif"> <span data-t="Low memory: open watch tabs only while reading">Low memory: open watch tabs only while reading</span></label>
       <label class="sadeceUygulama" hidden><input type="checkbox" id="a_oto"> <span data-t="Start PageSiren when I log in">Start PageSiren when I log in</span></label>
       <div class="satir" style="margin-top:10px">

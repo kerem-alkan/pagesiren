@@ -249,6 +249,7 @@ Windows'ta kaldırmak için diğer programlar gibi **Ayarlar > Uygulamalar**'ı 
 - [ ] Kod imzası, Windows uyarmasın diye
 - [x] Daha kısa kurulum: `npx pagesiren`
 - [ ] Chrome Web Mağazası
+- [x] Almanca ve İspanyolca
 - [ ] Daha fazla dil
 - [ ] macOS ve Linux'tan gerçek kullanım raporları
 

@@ -43,7 +43,7 @@ PageSiren started as a private project in Turkish. Comments and everything users
 
 ## Adding a language
 
-Open `extension/i18n.js`, copy the `TR` block, translate the values, and add it to `SOZLUK` and to the language list in `extension/dashboard.html`. `test/unit.test.js` checks that every text has a Turkish version; it's easy to extend to yours. The helper's window has its own few strings in `windows-helper/PageSirenAlarm.cs` (`Y("English", "Türkçe")`).
+Open `extension/i18n.js`, copy the `TR` block, translate the values, and add it to `SOZLUK` and to the language list in `extension/dashboard.html`. Turkish, German and Spanish are there already. `test/unit.test.js` checks that every text exists in each of them and keeps its `{placeholders}`; add your language code to that list. The Windows helper and installer have a few texts of their own in `windows-helper/PageSirenAlarm.cs` and `windows-installer/PageSirenSetup.cs`: each `Y(...)` takes English, Turkish, German and Spanish, and `DilSec` lists the codes.
 
 To teach it "sold out" in a new language, add the words to `OLUMSUZ` in `extension/background.js` and `DURUM_SOZ` in `extension/engine.js`, with a test.
 
