@@ -13,10 +13,21 @@ jobs:
   npm:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
+          package-manager-cache: false
       - run: npm run test:core
-      - run: npm publish
+      - name: Publish
+        # A version that is already on npm is not an error (the workflow was started twice). A passing server error gets two more tries.
+        run: |
+          v=$(node -p "require('./package.json').version")
+          for deneme in 1 2 3; do
+            if [ "$(npm view "pagesiren@$v" version 2>/dev/null)" = "$v" ]; then echo "pagesiren@$v is on npm"; exit 0; fi
+            npm publish && exit 0
+            echo "npm did not take it (try $deneme), trying again in 30 s"
+            sleep 30
+          done
+          exit 1

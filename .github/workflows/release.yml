@@ -19,12 +19,13 @@ jobs:
       TAG: ${{ inputs.tag || github.ref_name }}
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: refs/tags/${{ env.TAG }}
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
+          package-manager-cache: false
       - name: The bundled runtime must be the official signed Node.js
         shell: pwsh
         run: |
@@ -32,14 +33,20 @@ jobs:
           if ($s.Status -ne 'Valid' -or $s.SignerCertificate.Subject -notmatch 'OpenJS') { throw "unexpected signature: $($s.Status) $($s.SignerCertificate.Subject)" }
       - run: node tools/build-windows.js
       - run: node test/installer.test.js dist/PageSiren-Setup.exe
-      - uses: actions/attest-build-provenance@v2
+      - uses: actions/attest-build-provenance@v4
         with:
           subject-path: dist/PageSiren-Setup.exe
       - name: Publish
         shell: bash
+        # GitHub can answer with a passing server error (it did once, during an outage): try three times
         run: |
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release upload "$TAG" dist/PageSiren-Setup.exe dist/PageSiren-Setup.exe.sha256 --clobber
-          else
-            gh release create "$TAG" dist/PageSiren-Setup.exe dist/PageSiren-Setup.exe.sha256 --title "PageSiren ${TAG#v}" --notes-from-tag
-          fi
+          for deneme in 1 2 3; do
+            if gh release view "$TAG" >/dev/null 2>&1; then
+              gh release upload "$TAG" dist/PageSiren-Setup.exe dist/PageSiren-Setup.exe.sha256 --clobber && exit 0
+            else
+              gh release create "$TAG" dist/PageSiren-Setup.exe dist/PageSiren-Setup.exe.sha256 --title "PageSiren ${TAG#v}" --notes-from-tag && exit 0
+            fi
+            echo "GitHub did not take it (try $deneme), trying again in 30 s"
+            sleep 30
+          done
+          exit 1
