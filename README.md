@@ -182,7 +182,7 @@ Nowhere. The only requests it makes are to the pages you add and the notificatio
 <details>
 <summary><strong>Does it work on Mac and Linux?</strong></summary>
 
-Windows is what this has been used on every day. macOS and Linux should work but are new and much less tested, so reports are very welcome.
+Windows is what this has been used on every day. On macOS and Linux the whole program is tested with a real browser on every change, but nobody uses it there daily yet, so reports are very welcome.
 </details>
 
 ## All the details

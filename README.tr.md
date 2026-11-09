@@ -182,7 +182,7 @@ Hiçbir yere. Program sadece eklediğiniz sayfalara ve kurduğunuz bildirim kana
 <details>
 <summary><strong>Mac ve Linux'ta çalışır mı?</strong></summary>
 
-Her gün kullanıldığı yer Windows. macOS ve Linux'ta çalışması beklenir ama yeni ve çok daha az denenmiştir, geri bildirimleriniz çok değerli.
+Her gün kullanıldığı yer Windows. macOS ve Linux'ta da her değişiklikte program baştan sona, gerçek bir tarayıcıyla test ediliyor, ama orada henüz her gün kullanan yok. Geri bildirimleriniz çok değerli.
 </details>
 
 ## Tüm ayrıntılar
