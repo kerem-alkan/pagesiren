@@ -16,7 +16,7 @@
 //                      herDegisiklik, hizli, kaliciSekme, girisYazisi, okuyucu, yoksay[], sekmeId, son*...}]
 //   motor_<id>       : that watch's engine state {taban, bekleyen, etiket, isinma}
 //   alarmlar         : last 50 alarms  [{id, izId, ad, url, zaman, satirlar[], anahtarlar[], durum}]
-//   arsiv            : last 30 deleted watches (can be restored)
+//   arsiv            : watches that left the list, both restorable: neden 'silindi' (Delete, last 50) or 'alindi' (Got it, last 100)
 //   ayarlar          : {ustte, ses, sesSn, hafifSekme, dil}
 //   pencereId, motorSurum : watch window id, version of the last warm-up
 //
@@ -53,7 +53,8 @@ const YARDIMCI = 'http://127.0.0.1:47430';
 const YAYMA_MS = typeof self.__TEST_YAYMA_MS === 'number' ? self.__TEST_YAYMA_MS : 25000; // spread reloads across the round
 const ARALIKLAR = [30, 60, 120, 180, 300, 600, 1800]; // ready-made choices on screen: 30 s, 1-2-3-5-10 min, half an hour
 // Values in between are allowed through commands: multiples of 30 s, at most 1 hour.
-const gecerliAralik = (v) => { const n = Number(v); return Number.isInteger(n) && n >= 30 && n <= 3600 && n % 30 === 0; };
+// From 30 seconds to a day, in steps of 30 seconds (the dashboard slider goes 30 s ... 1 d)
+const gecerliAralik = (v) => { const n = Number(v); return Number.isInteger(n) && n >= 30 && n <= 86400 && n % 30 === 0; };
 const OKUMA_BEKLE_MS = typeof self.__TEST_OKUMA_BEKLE_MS === 'number' ? self.__TEST_OKUMA_BEKLE_MS : 5000; // wait after the page says "loaded"
 const TEKRAR_OKU_MS = typeof self.__TEST_TEKRAR_OKU_MS === 'number' ? self.__TEST_TEKRAR_OKU_MS : 6000;      // look once more if the page looks very empty
 const SATIN_ALMA_DK = 30;        // after an alarm, the page is not reloaded for at most this long until the user looks
@@ -175,7 +176,7 @@ async function tik() {
 
 // Sync with the desktop helper: write the status summary, take queued local commands.
 const KOMUT_IZINLI = ['EKLE', 'GUNCELLE', 'NOBET', 'NOBET_HEPSI', 'DURAKLAT', 'BASLAT', 'ALARM_KAPAT', 'DISA_AKTAR'];
-// DISA_AKTAR: the next summary includes a FULL backup (watches with all fields, last 50 alarms, deleted watches, settings).
+// DISA_AKTAR: the next summary includes a FULL backup (watches with all fields, last 200 alarms, deleted and got-it watches, settings).
 // For backups or moving to another computer.
 let disaAktarIstendi = false;
 // If the version on disk differs from the loaded one, the extension reloads itself: after the files change and the manifest version
@@ -742,12 +743,17 @@ async function alarmVer(iz, satirlar, anahtarlar) {
   await sirali(async () => {
     const liste = (await al('alarmlar')) || [];
     liste.unshift(a);
-    await koy('alarmlar', liste.slice(0, 50));
+    await koy('alarmlar', liste.slice(0, 200));
   });
   if (iz.id !== 'test') {
     // a session warning doesn't put the page on hold: once the user logs in, watching must continue right away
     const oturumUyarisi = (anahtarlar || []).length === 1 && anahtarlar[0] === 'oturum';
-    await izDegistir(iz.id, (x) => { x.durum = 'degisti'; if (!oturumUyarisi) x.satinAlmaBekle = Date.now() + SATIN_ALMA_DK * 60e3; });
+    await izDegistir(iz.id, (x) => {
+      x.durum = 'degisti';
+      if (!oturumUyarisi) x.satinAlmaBekle = Date.now() + SATIN_ALMA_DK * 60e3;
+      x.alarmSay = (x.alarmSay || 0) + 1; // the card shows how many alarms and when the last one came, even after the list has moved on
+      x.sonAlarm = a.zaman;
+    });
   }
   await rozet();
   try { await trackerAc(false); } catch (e) { /* even if the screen cannot open, the alarm must reach the helper */ } // alarm: no window shuffling
@@ -772,6 +778,29 @@ async function yardimciyaYolla(yol, veri) {
   } finally { clearTimeout(zt); }
 }
 
+// A watch leaves the list: 'silindi' (Delete) or 'alindi' (Got it). Both can be restored; each kind keeps its own number of entries.
+const ARSIV_SINIR = { silindi: 50, alindi: 100 };
+const arsivTuru = (x) => (x.neden === 'alindi' ? 'alindi' : 'silindi');
+const arsivOzeti = (x) => ({ id: x.id, ad: x.ad, url: x.url, neden: arsivTuru(x), silinme: x.silinme, alinma: x.alinma, olusturma: x.olusturma, aralikSn: x.aralikSn, alarmSay: x.alarmSay || 0, sonAlarm: x.sonAlarm || '' });
+async function arsiveTasi(id, neden) {
+  let iz = null;
+  const simdi = Date.now();
+  await sirali(async () => {
+    const l = await izlemeler();
+    const i = l.findIndex((x) => x.id === id);
+    if (i < 0) return;
+    iz = l.splice(i, 1)[0];
+    await koy('izlemeler', l);
+    const arsiv = (await al('arsiv')) || [];
+    arsiv.unshift({ ...iz, sekmeId: null, neden, [neden === 'alindi' ? 'alinma' : 'silinme']: simdi });
+    const say = { silindi: 0, alindi: 0 };
+    await koy('arsiv', arsiv.filter((x) => ++say[arsivTuru(x)] <= ARSIV_SINIR[arsivTuru(x)]));
+  });
+  if (iz && iz.sekmeId != null) { try { await krom(chrome.tabs.remove(iz.sekmeId)); } catch (e) { /* harmless */ } }
+  if (iz) await chrome.storage.local.remove('motor_' + iz.id);
+  return iz;
+}
+
 async function alarmKapat(alarmId, islemAdi) {
   const izdenAnahtar = new Map(); // watch -> keys of closed alarms ('*' touches several watches)
   let kalan = 0;
@@ -785,6 +814,8 @@ async function alarmKapat(alarmId, islemAdi) {
       }
     }
     kalan = liste.filter((a) => a.durum === 'yeni').length;
+    // a closed alarm keeps only a few of its keys: the history shows its lines, and the list stays small
+    for (const a of liste) if (a.durum !== 'yeni' && (a.anahtarlar || []).length > 40) a.anahtarlar = a.anahtarlar.slice(0, 40);
     await koy('alarmlar', liste);
   });
   for (const id of new Set(kuyrukIzleri)) await izDegistir(id, (x) => { x.kuyrukSessiz = true; });
@@ -792,13 +823,13 @@ async function alarmKapat(alarmId, islemAdi) {
     await izDegistir(izId, (x) => {
       x.satinAlmaBekle = 0;
       if (x.durum === 'degisti') { x.durum = x.aktif ? 'izleniyor' : 'duraklatildi'; x.sorun = ''; }
-      if (islemAdi === 'aldim') { x.aktif = false; x.durum = 'duraklatildi'; x.not = T('Done'); }
       // "false alarm"/"ignore": this change won't be asked again. EXCEPT BUY signals and session/queue keys.
       const yoksayilacak = anahtarlar.filter((k) => !String(k).startsWith('kuyruk:') && k !== 'oturum' && (islemAdi === 'yoksay' || !satisSinyali(k)));
       if (islemAdi === 'yanlis' || islemAdi === 'yoksay') x.yoksay = [...new Set((x.yoksay || []).concat(yoksayilacak))].slice(0, 500);
       if ((islemAdi === 'yoksay' || islemAdi === 'yanlis') && anahtarlar.some((k) => String(k).startsWith('kuyruk:'))) x.kuyrukSessiz = true;
     });
   }
+  if (islemAdi === 'aldim') for (const izId of izdenAnahtar.keys()) await arsiveTasi(izId, 'alindi'); // "Got it": into the Got it history
   if (!kalan) await yardimciyaYolla('/kapat', {});
   await sesDurdur();
   await rozet();
@@ -855,10 +886,14 @@ async function islem(m) {
   const simdi = Date.now();
   switch (m && m.tip) {
     case 'LISTE': {
+      const alarmlar = (await al('alarmlar')) || [];
+      const arsiv = (await al('arsiv')) || [];
       return {
         izlemeler: await izlemeler(),
-        alarmlar: (await al('alarmlar')) || [],
-        arsiv: (await al('arsiv')) || [],
+        // hafif: what the dashboard needs every few seconds. Only open alarms (a watch's history comes with ALARM_GECMISI when its card
+        // opens) and the archive without baselines and ignore lists.
+        alarmlar: m.hafif ? alarmlar.filter((a) => a.durum === 'yeni') : alarmlar,
+        arsiv: m.hafif ? arsiv.map(arsivOzeti) : arsiv,
         ayarlar: await ayarlar(),
         yardimci: await yardimciVarMi(),
         dil: T.dil(),
@@ -895,21 +930,30 @@ async function islem(m) {
       });
       return iz ? { ok: true } : { hata: T('Watch not found.') };
     }
-    case 'SIL': {
-      let iz = null;
+    case 'SIL': return { ok: !!(await arsiveTasi(m.id, 'silindi')) };
+    // "Got it": the ticket is bought, the slot booked. The watch goes to the Got it history; its open alarms close the same way.
+    case 'ALDIM': {
+      const acik = ((await al('alarmlar')) || []).filter((a) => a.izId === m.id && a.durum === 'yeni');
+      for (const a of acik) await alarmKapat(a.id, 'aldim');
+      if (acik.length) return { ok: true };
+      return { ok: !!(await arsiveTasi(m.id, 'alindi')) };
+    }
+    // Gone for good, with its alarms: only from the archive.
+    case 'KALICI_SIL': {
+      let bulundu = false;
       await sirali(async () => {
-        const l = await izlemeler();
-        const i = l.findIndex((x) => x.id === m.id);
-        if (i < 0) return;
-        iz = l.splice(i, 1)[0];
-        await koy('izlemeler', l);
         const arsiv = (await al('arsiv')) || [];
-        arsiv.unshift({ ...iz, silinme: simdi });
-        await koy('arsiv', arsiv.slice(0, 30));
+        const kalan = arsiv.filter((x) => x.id !== m.id);
+        bulundu = kalan.length !== arsiv.length;
+        if (!bulundu) return;
+        await koy('arsiv', kalan);
+        await koy('alarmlar', ((await al('alarmlar')) || []).filter((a) => a.izId !== m.id));
       });
-      if (iz && iz.sekmeId != null) { try { await krom(chrome.tabs.remove(iz.sekmeId)); } catch (e) { /* harmless */ } }
-      if (iz) await chrome.storage.local.remove('motor_' + iz.id);
-      return { ok: !!iz };
+      return { ok: bulundu };
+    }
+    case 'ALARM_GECMISI': {
+      const alarmlar = (await al('alarmlar')) || [];
+      return { alarmlar: alarmlar.filter((a) => a.izId === m.id).map(({ anahtarlar, ...a }) => a) };
     }
     case 'GERIAL': {
       let iz = null;
@@ -920,7 +964,8 @@ async function islem(m) {
         iz = arsiv.splice(i, 1)[0];
         await koy('arsiv', arsiv);
         const l = await izlemeler();
-        l.push({ ...iz, sekmeId: null, durum: 'hazirlaniyor', sorun: '', ozet: '', sonKontrol: 0, sonYenileme: 0 });
+        const { neden, silinme, alinma, ...geri } = iz;
+        l.push({ ...geri, aktif: true, not: '', sekmeId: null, durum: 'hazirlaniyor', sorun: '', ozet: '', sonKontrol: 0, sonYenileme: 0 });
         await koy('izlemeler', l);
       });
       tik();

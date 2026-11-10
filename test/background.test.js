@@ -187,9 +187,10 @@ const etkinlikSayfasi = (o) => {
   ok('ayni "Satın Al" tekrar gelince yine ALARM', t.alarmlar().length === 1);
   a = t.alarmlar()[0];
   await t.islem({ tip: 'ALARM_KAPAT', alarmId: a.id, islem: 'aldim' });
-  ok('bilet aldim: izleme durdu, not yazildi', !t.iz(c.id).aktif && /Tamamlandı/.test(t.iz(c.id).not || ''));
-  await t.islem({ tip: 'BASLAT', id: c.id });
-  ok('tekrar baslatilabilir', t.iz(c.id).aktif === true);
+  ok('got it: the alarm closed and the watch moved to the Got it history', !t.iz(c.id) && t.alarmlar().length === 0
+    && (t.depo.arsiv || []).some((x) => x.id === c.id && x.neden === 'alindi' && x.alinma > 0));
+  await t.islem({ tip: 'GERIAL', id: c.id });
+  ok('watching again from Got it', !!t.iz(c.id) && t.iz(c.id).aktif === true && !t.iz(c.id).neden && !t.iz(c.id).alinma);
 
   console.log('4) Keyword filter');
   t = kur();
@@ -561,8 +562,8 @@ const etkinlikSayfasi = (o) => {
   await t.islem({ tip: 'GUNCELLE', id: c.id, aralikSn: 420 });
   ok('GUNCELLE 420 sn (7 dk) kabul', t.iz(c.id).aralikSn === 420);
   await t.islem({ tip: 'GUNCELLE', id: c.id, aralikSn: 45 });
-  await t.islem({ tip: 'GUNCELLE', id: c.id, aralikSn: 7200 });
-  ok('30 sn katı olmayan / 1 saatten uzun aralik reddedilir', t.iz(c.id).aralikSn === 420);
+  await t.islem({ tip: 'GUNCELLE', id: c.id, aralikSn: 90000 });
+  ok('an interval that is not a multiple of 30 s, or longer than a day, is refused', t.iz(c.id).aralikSn === 420);
   await t.sayfa(c.id, etkinlikSayfasi());
   await t.islem({ tip: 'GUNCELLE', id: c.id, detay: true });
   await t.tik();
@@ -1149,6 +1150,48 @@ const etkinlikSayfasi = (o) => {
   await t.islem({ tip: 'ALARM_KAPAT', alarmId: '*', islem: 'gec' });
   for (const s of [[sonraki], [sonraki]]) await t.sayfa(c.id, listeSayfa(s), LISTE_URL);
   ok('a future event dropping off still rings', t.alarmlar().length === 1 && t.alarmlar()[0].satirlar.some((x) => /Team C/.test(x)), JSON.stringify(t.alarmlar().map((x) => x.satirlar)));
+
+  console.log('34) Dashboard: Got it and Deleted histories, deleting for good, a card\'s alarm history, intervals up to a day');
+  const KART_URL = 'https://ornek.test/kart';
+  t = kur({ hafif: true, acmaSiniri: 100 }); // several new tabs in a row
+  // light mode closes a tab after each read: every read opens it again, as a real round would
+  const okut = async (id, h, url) => { t.depo.izlemeler.find((x) => x.id === id).sonYenileme = 0; await t.tik(); await t.sayfa(id, h, url); await bekle(5); };
+  c = await t.islem({ tip: 'EKLE', ad: 'Kart', url: KART_URL, aralikSn: 60 });
+  await bekle(20);
+  await t.tik();
+  for (const h of [etkinlikSayfasi(), etkinlikSayfasi(), etkinlikSayfasi({ tukendi: false, buton: true }), etkinlikSayfasi({ tukendi: false, buton: true })]) await okut(c.id, h, KART_URL);
+  ok('an alarm counts on the watch, with its time', t.iz(c.id).alarmSay === 1 && !!t.iz(c.id).sonAlarm && t.alarmlar().length === 1);
+  const hafif = await t.islem({ tip: 'LISTE', hafif: true });
+  ok('the light list has only open alarms and no keys from the archive', hafif.alarmlar.every((x) => x.durum === 'yeni') && Array.isArray(hafif.arsiv));
+  await t.islem({ tip: 'ALARM_KAPAT', alarmId: t.alarmlar()[0].id, islem: 'gec' });
+  const gecmisi = await t.islem({ tip: 'ALARM_GECMISI', id: c.id });
+  ok('the card\'s history: its alarm, closed, without keys', gecmisi.alarmlar.length === 1 && gecmisi.alarmlar[0].durum === 'gec' && !('anahtarlar' in gecmisi.alarmlar[0]) && gecmisi.alarmlar[0].satirlar.length > 0);
+  ok('the light list leaves closed alarms out', (await t.islem({ tip: 'LISTE', hafif: true })).alarmlar.length === 0);
+  await t.islem({ tip: 'ALDIM', id: c.id });
+  const arsivde = (await t.islem({ tip: 'LISTE', hafif: true })).arsiv.find((x) => x.id === c.id);
+  ok('"Got it" from the card: into the Got it history, short form in the light list', !t.iz(c.id) && arsivde && arsivde.neden === 'alindi' && arsivde.alarmSay === 1 && !('yoksay' in arsivde));
+  await t.islem({ tip: 'GERIAL', id: c.id });
+  await t.islem({ tip: 'SIL', id: c.id });
+  ok('Delete: into the Deleted history', !t.iz(c.id) && (t.depo.arsiv || []).some((x) => x.id === c.id && x.neden === 'silindi' && x.silinme > 0));
+  await t.islem({ tip: 'KALICI_SIL', id: c.id });
+  ok('deleting for good removes it and its alarms', !(t.depo.arsiv || []).some((x) => x.id === c.id) && !(t.depo.alarmlar || []).some((x) => x.izId === c.id));
+  const d2 = await t.islem({ tip: 'EKLE', ad: 'Acik alarmli', url: KART_URL + '/2', aralikSn: 60 });
+  await bekle(20);
+  await t.tik();
+  for (const h of [etkinlikSayfasi(), etkinlikSayfasi(), etkinlikSayfasi({ tukendi: false, buton: true }), etkinlikSayfasi({ tukendi: false, buton: true })]) await okut(d2.id, h, KART_URL + '/2');
+  await t.islem({ tip: 'ALDIM', id: d2.id });
+  ok('"Got it" on a card with an open alarm closes the alarm too', t.alarmlar().length === 0 && (t.depo.arsiv || []).some((x) => x.id === d2.id && x.neden === 'alindi'));
+  const uzun = await t.islem({ tip: 'EKLE', ad: 'Uzun', url: KART_URL + '/uzun', aralikSn: 86400 });
+  ok('an interval of a day is accepted', t.iz(uzun.id).aralikSn === 86400);
+  await t.islem({ tip: 'GUNCELLE', id: uzun.id, aralikSn: 90000 });
+  ok('more than a day is refused', t.iz(uzun.id).aralikSn === 86400);
+  await t.islem({ tip: 'GUNCELLE', id: uzun.id, aralikSn: 7200 });
+  ok('two hours is accepted', t.iz(uzun.id).aralikSn === 7200);
+  t = kur();
+  for (let i = 0; i < 53; i++) { const e = await t.islem({ tip: 'EKLE', ad: 'S' + i, url: KART_URL + '/s' + i, aralikSn: 60 }); await t.islem({ tip: 'SIL', id: e.id }); }
+  for (let i = 0; i < 3; i++) { const e = await t.islem({ tip: 'EKLE', ad: 'A' + i, url: KART_URL + '/a' + i, aralikSn: 60 }); await t.islem({ tip: 'ALDIM', id: e.id }); }
+  const turler = (t.depo.arsiv || []).reduce((m, x) => { m[x.neden] = (m[x.neden] || 0) + 1; return m; }, {});
+  ok('the Deleted history keeps the last 50, Got it keeps its own', turler.silindi === 50 && turler.alindi === 3 && (t.depo.arsiv || []).some((x) => x.ad === 'S52') && !(t.depo.arsiv || []).some((x) => x.ad === 'S0'), JSON.stringify(turler));
 
   console.log('\n' + gecti + ' gecti, ' + kaldi + ' basarisiz');
   process.exit(kaldi ? 1 : 0);
