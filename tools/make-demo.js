@@ -10,8 +10,8 @@ const { spawn } = require('child_process');
 const { tarayiciBul } = require('../app/browser');
 
 const KOK = path.join(__dirname, '..');
-const GEN = 980;
-const YUK = 640;
+const GEN = 1120; // wide enough for the filter column
+const YUK = 680;
 const UI_PORT = 47499;
 const UI = 'http://127.0.0.1:' + UI_PORT;
 const bekle = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -227,7 +227,8 @@ let uyg = null;
   await k.git(UI + '/');
   await bekle(800);
   await yazi(METIN.y2);
-  await k.js(`document.querySelector('#y_aralik').value='30'`);
+  // the add panel opens by itself while there are no watches; the slider's first step is 30 s
+  await k.js(`(()=>{if(document.querySelector('#ekleBlok').hidden)document.querySelector('#ekleAc').click();const r=document.querySelector('#y_aralik');r.value='0';r.dispatchEvent(new Event('input'))})()`);
   await cek(700);
   for (const parca of METIN.ad) { await k.js(`document.querySelector('#y_ad').value=${JSON.stringify(parca)}`); await cek(260); }
   await k.js(`document.querySelector('#y_url').value=${JSON.stringify(dukkanAdres)}`);

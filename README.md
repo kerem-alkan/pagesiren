@@ -192,13 +192,15 @@ Windows is what this has been used on every day. On macOS and Linux the whole pr
 
 | Option | What it does |
 |---|---|
-| How often | From 30 seconds to 30 minutes. 5 minutes is a kind default. |
+| How often | From 30 seconds to a day, with a slider on every card. A change applies from the next read. 5 minutes is a kind default. |
 | Words | Alarm only if a change contains one of these words. "Sold out" going away always counts. |
 | Alarm on every change | Turns off the direction rule. |
 | Login check | Text you can only see when logged in. If it disappears, you get told once instead of watching a logged-out page. You can leave it empty: a logout link disappearing from the page counts too. |
 | Fast | Alarm on the first read when "sold out" goes away, for things that vanish in a minute. |
 | Keep the tab open | For slow pages that only fill in after a while. |
 | Who reads the page | Separate browser (default), plain HTTP (lightest), or your own Chrome through the extension. |
+
+The column on the left filters the list: active, problems, bot check, paused, and two histories you can restore from, **Got it** for pages you are done with and **Deleted**. Click a card to see its address and its own alarm history; each card also shows when it was added.
 
 Other things on the dashboard: **Re-arm** makes a page's current state the new normal, **False alarm** teaches it to ignore that change, and **Export / Import** moves your list to another computer.
 </details>

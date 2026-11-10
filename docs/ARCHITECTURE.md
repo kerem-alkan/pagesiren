@@ -79,7 +79,7 @@ Keys never depend on the interface language, so switching language doesn't look 
 |---|---|
 | `store/izlemeler.json` | The watch list (a last good copy is kept as `.yedek`) |
 | `store/motor_<id>.json` | One watch's baseline and pending changes |
-| `store/alarmlar.json`, `arsiv.json`, `ayarlar.json` | Last 50 alarms, deleted watches, settings |
+| `store/alarmlar.json`, `arsiv.json`, `ayarlar.json` | Last 200 alarms, deleted (50) and got-it (100) watches, settings |
 | `profile/` | The reader browser's profile. **Contains your cookies.** |
 | `alarm-profile/` | A separate profile for the browser alarm window |
 | `notify.json` | Notification settings, owner-only where the system supports it |

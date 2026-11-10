@@ -192,13 +192,15 @@ Her gün kullanıldığı yer Windows. macOS ve Linux'ta da her değişiklikte p
 
 | Seçenek | Ne yapar |
 |---|---|
-| Ne sıklıkla baksın | 30 saniyeden 30 dakikaya kadar. 5 dakika sitelere karşı nazik bir aralıktır. |
+| Ne sıklıkla baksın | 30 saniyeden bir güne kadar, her kartta bir kaydırma çubuğuyla. Değişiklik bir sonraki okumada geçerli olur. 5 dakika sitelere karşı nazik bir aralıktır. |
 | Kelimeler | Sadece değişiklikte bu kelimelerden biri geçerse alarm verir. "Tükendi" yazısının kalkması her zaman sayılır. |
 | Her değişiklikte alarm ver | Yön kuralını kapatır. |
 | Giriş kontrolü | Sadece giriş yapınca görünen bir yazı. Kaybolursa, çıkış yapılmış sayfayı izlemek yerine size bir kez söyler. Boş bırakabilirsiniz: sayfadaki çıkış linkinin kaybolması da aynı uyarıyı verir. |
 | Hızlı | "Tükendi" kalkınca ilk okumada alarm verir, bir dakikada biten şeyler için. |
 | Sekmeyi açık tut | Geç dolan yavaş sayfalar için. |
 | Sayfayı kim okusun | Ayrı tarayıcı (varsayılan), düz HTTP (en hafif) ya da eklentiyle kendi Chrome'unuz. |
+
+Soldaki sütun listeyi süzer: aktif, sorunlu, bot kontrolü, duraklatılanlar ve geri alınabilen iki geçmiş, işi biten sayfalar için **Aldıklarım** ve **Silinenler**. Bir karta tıklayınca adresini ve kendi alarm geçmişini görürsünüz; her kart ne zaman eklendiğini de gösterir.
 
 Takip ekranında ayrıca: **Yeniden nöbet** sayfanın şu anki halini yeni normal yapar, **Yanlış alarm** o değişikliği görmezden gelmeyi öğretir, **İzlemeleri dışa/içe aktar** listenizi başka bilgisayara taşır.
 </details>
