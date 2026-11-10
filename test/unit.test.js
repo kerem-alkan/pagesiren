@@ -109,7 +109,8 @@ const bekle = (ms) => new Promise((r) => setTimeout(r, ms));
   ['extension/background.js', 'extension/engine.js', 'extension/dashboard.js', 'extension/dashboard.html', 'app/pagesiren.js', 'app/alarm.html'].forEach(bak);
   // texts that reach T() through a variable
   ['link', 'option', 'button', 'form field', 'link text', 'heading', 'list row', 'table row', 'text', 'status text', 'event', 'item',
-    'OPEN', 'done', 'false alarm', 'dismissed', 'ignored', 'closed', ' · alarm helper is running', ' · alarm: red desktop window', ' · alarm: browser window',
+    'OPEN', 'got it', 'false alarm', 'dismissed', 'ignored', 'closed', 'All', 'Active', 'Problems', 'Bot check', 'Paused', 'Got it', 'Deleted',
+    'Watching', 'Getting ready', 'On hold', 'Problem', 'Changed', 'Watch again', 'Restore', 'No watches here.', 'No watches yet. Add a page with the button above.', 'No alarms yet.', ' · alarm helper is running', ' · alarm: red desktop window', ' · alarm: browser window',
     'read without a browser', 'read by the Chrome extension', 'Bot token', 'Chat ID', 'Webhook address', 'Server', 'Topic', 'Address',
     'Separate browser (handles JavaScript and logins)', 'Plain HTTP (lightest, no JavaScript)', 'My Chrome extension (Windows, extension installed)'].forEach((m) => metinler.add(m));
   for (const dil of ['tr', 'de', 'es']) {
