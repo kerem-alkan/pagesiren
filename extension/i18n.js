@@ -179,6 +179,7 @@
     'No alarms yet.': 'Henüz alarm yok.',
     'No watches yet. Add a page with the button above.': 'Henüz izleme yok. Yukarıdaki düğmeyle bir sayfa ekleyin.',
     'On hold': 'Duraklatıldı',
+    'Opening the page in PageSiren’s own window…': 'Sayfa PageSiren’in kendi penceresinde açılıyor…',
   };
   const DE = {
     'This site is read by the Chrome extension, but the extension is not running: NOT BEING READ. Open Chrome; if the extension is off, turn it on at chrome://extensions.': 'Diese Seite wird von der Chrome-Erweiterung gelesen, aber die Erweiterung läuft nicht: WIRD NICHT GELESEN. Öffne Chrome; ist die Erweiterung aus, schalte sie unter chrome://extensions ein.',
@@ -349,6 +350,7 @@
     'No alarms yet.': 'Noch keine Alarme.',
     'No watches yet. Add a page with the button above.': 'Noch keine Beobachtungen. Füge oben mit der Schaltfläche eine Seite hinzu.',
     'On hold': 'Pausiert',
+    'Opening the page in PageSiren’s own window…': 'Die Seite öffnet sich im eigenen Fenster von PageSiren …',
   };
   const ES = {
     'This site is read by the Chrome extension, but the extension is not running: NOT BEING READ. Open Chrome; if the extension is off, turn it on at chrome://extensions.': 'Esta página la lee la extensión de Chrome, pero la extensión no está funcionando: NO SE ESTÁ LEYENDO. Abre Chrome; si la extensión está desactivada, actívala en chrome://extensions.',
@@ -519,6 +521,7 @@
     'No alarms yet.': 'Aún no hay alarmas.',
     'No watches yet. Add a page with the button above.': 'Aún no hay vigilancias. Añade una página con el botón de arriba.',
     'On hold': 'En pausa',
+    'Opening the page in PageSiren’s own window…': 'Abriendo la página en la ventana propia de PageSiren…',
   };
   const SOZLUK = { tr: TR, de: DE, es: ES };
   let dil = '';

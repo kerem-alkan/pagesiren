@@ -7,7 +7,7 @@ const http = require('http');
 const { Bildirim } = require('../app/notify');
 const otoBaslat = require('../app/autostart');
 const T = require('../extension/i18n');
-const { Tarayici } = require('../app/browser');
+const { Tarayici, pencereYeri } = require('../app/browser');
 
 const KOK = path.join(__dirname, '..');
 let gecti = 0;
@@ -160,6 +160,32 @@ const bekle = (ms) => new Promise((r) => setTimeout(r, ms));
   tar.kapat('yasli');
   await bekle(150);
   ok('a browser that will not close is cut by the timer', sonraki.kapandi === 1 && tar.kapaniyor === null);
+
+  console.log('"Open" window: in the middle of the dashboard\'s screen');
+  const yer = (e) => JSON.stringify(pencereYeri(e));
+  ok('no screen given: the main screen as before', yer(null) === JSON.stringify({ left: 90, top: 50, width: 1280, height: 880 }), yer(null));
+  ok('a screen on the left of the main one', yer({ sol: -1920, ust: 0, en: 1920, boy: 1040 }) === JSON.stringify({ left: -1600, top: 80, width: 1280, height: 880 }), yer({ sol: -1920, ust: 0, en: 1920, boy: 1040 }));
+  ok('a small screen: the window fits inside it', yer({ sol: 0, ust: 0, en: 1024, boy: 700 }) === JSON.stringify({ left: 20, top: 20, width: 984, height: 660 }), yer({ sol: 0, ust: 0, en: 1024, boy: 700 }));
+
+  console.log('Reading browser: page translation stays off (a translated page reads other words)');
+  const cProfil = path.join(dizin, 'ceviri-profil');
+  const cTar = new Tarayici({ profil: cProfil });
+  const tercih = path.join(cProfil, 'Default', 'Preferences');
+  const oku = () => JSON.parse(fs.readFileSync(tercih, 'utf8'));
+  cTar.ceviriyiKapat();
+  ok('a new profile starts with translation off', fs.existsSync(tercih) && oku().translate.enabled === false, fs.existsSync(tercih) && fs.readFileSync(tercih, 'utf8'));
+  fs.writeFileSync(tercih, JSON.stringify({ intl: { selected_languages: 'tr,en' }, translate: { enabled: true, baska: 1 }, translate_allowlists: { el: 'tr' }, translate_recent_target: 'tr' }));
+  cTar.ceviriyiKapat();
+  const t1 = oku();
+  ok('turned off, "always translate" rules dropped, the rest kept', t1.translate.enabled === false && t1.translate.baska === 1 && !('translate_allowlists' in t1)
+    && t1.intl.selected_languages === 'tr,en' && t1.translate_recent_target === 'tr', JSON.stringify(t1));
+  const once = fs.readFileSync(tercih, 'utf8');
+  fs.writeFileSync(tercih, once + ' ');
+  cTar.ceviriyiKapat();
+  ok('already off: the file is not rewritten', fs.readFileSync(tercih, 'utf8') === once + ' ');
+  fs.writeFileSync(tercih, '{bozuk');
+  cTar.ceviriyiKapat();
+  ok('a file that cannot be read is left alone', fs.readFileSync(tercih, 'utf8') === '{bozuk');
 
   console.log('\n' + gecti + ' passed, ' + kaldi + ' failed');
   try { fs.rmSync(dizin, { recursive: true, force: true }); } catch (e) { /* temp folder */ }

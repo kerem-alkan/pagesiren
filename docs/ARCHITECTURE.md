@@ -91,7 +91,7 @@ Keys never depend on the interface language, so switching language doesn't look 
 | Port | Who | Notes |
 |---|---|---|
 | 47431 | Dashboard and its API | 127.0.0.1 only. Checks `Host` (DNS rebinding) and `Origin` (other web pages can't write). |
-| 47430 | Windows helper | 127.0.0.1 only. Accepts no `Origin` other than the extension. |
+| 47430 | Windows helper | 127.0.0.1 only. Accepts no `Origin` other than the extension. Commands and raising the **Open** window (`/one-getir`, only a Chrome, Edge or Brave process) accept no `Origin` at all. |
 
 ## Tests
 

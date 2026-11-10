@@ -33,6 +33,13 @@ const BAYRAKLAR = [
   '--disable-features=Translate,OptimizationHints,MediaRouter,DialMediaRouteProvider,InterestFeedContentSuggestions,AutofillServerCommunication,CalculateNativeWinOcclusion,PrivacySandboxSettings4,SpareRendererForSitePerProcess',
 ];
 
+// Where the "Open" window goes: 1280 x 880 (smaller on a small screen) in the middle of the dashboard's screen
+function pencereYeri(ekran) {
+  if (!ekran) return { left: 90, top: 50, width: 1280, height: 880 };
+  const width = Math.min(1280, ekran.en - 40), height = Math.min(880, ekran.boy - 40);
+  return { left: ekran.sol + Math.round((ekran.en - width) / 2), top: ekran.ust + Math.round((ekran.boy - height) / 2), width, height };
+}
+
 // Finds a Chromium-based browser. Firefox can't be driven through this protocol.
 function tarayiciBul() {
   const e = process.env;
@@ -75,6 +82,33 @@ class Tarayici {
 
   calisiyorMu() { return !!this.ws; }
 
+  // The browser's process number (also for a browser that was already running), 0 if unknown
+  surecNo() {
+    try { return Number(fs.readFileSync(this.pidDosyasi, 'utf8')) || 0; } catch (e) { return 0; }
+  }
+
+  // Pages must be read as they are: a translated page has other words in it (wrong alarms, words that never match). Chrome's
+  // Translate switch no longer hides the "Translate this page?" offer in the "Open" window, so the profile's own setting is turned
+  // off too, and an "always translate" rule picked there is dropped. Only while the browser is closed; an unreadable file is left alone.
+  ceviriyiKapat() {
+    const dosya = path.join(this.s.profil, 'Default', 'Preferences');
+    let p = {};
+    if (fs.existsSync(dosya)) {
+      try { p = JSON.parse(fs.readFileSync(dosya, 'utf8')); } catch (e) { return; }
+      if (!p || typeof p !== 'object' || Array.isArray(p)) return;
+    }
+    const t = p.translate && typeof p.translate === 'object' ? p.translate : {};
+    if (t.enabled === false && !('translate_allowlists' in p) && !('translate_whitelists' in p)) return;
+    p.translate = Object.assign(t, { enabled: false });
+    delete p.translate_allowlists;
+    delete p.translate_whitelists;
+    try {
+      fs.mkdirSync(path.dirname(dosya), { recursive: true });
+      fs.writeFileSync(dosya + '.pagesiren', JSON.stringify(p));
+      fs.renameSync(dosya + '.pagesiren', dosya);
+    } catch (e) { this.gunluk('could not turn off page translation: ' + e.message); }
+  }
+
   // ---------------------------------------------------------------- startup / connection
   async hazirla() {
     if (this.kapaniyor) await this.kapaniyor;
@@ -92,6 +126,7 @@ class Tarayici {
       // A second Chrome won't start on the same profile (it hands off to the first and exits): if an old one is half finished, it's ended first.
       await this.eskiyiBitir();
       try { fs.unlinkSync(portDosyasi); } catch (e) { /* none */ }
+      this.ceviriyiKapat();
       const arg = ['--user-data-dir=' + this.s.profil, '--remote-debugging-port=0', ...BAYRAKLAR, ...(this.s.ekBayrak || [])];
       if (this.s.gizli) arg.push('--headless=new');
       else arg.push('--window-position=-32000,-32000', '--window-size=1280,900', '--start-minimized');
@@ -312,7 +347,8 @@ class Tarayici {
   }
 
   // A window the user will see (login / verification). Same profile: passed logins and checks hold for later reads too.
-  async gorunurAc(adres) {
+  // ekran: the screen the dashboard is on ({sol, ust, en, boy}); the window opens in the middle of it. Without it: the main screen.
+  async gorunurAc(adres, ekran) {
     await this.hazirla();
     clearTimeout(this.bosZamanlayici);
     const { targetId } = await this.gonder('Target.createTarget', { url: adres, newWindow: true });
@@ -321,7 +357,15 @@ class Tarayici {
       try {
         const { windowId } = await this.gonder('Browser.getWindowForTarget', { targetId });
         await this.gonder('Browser.setWindowBounds', { windowId, bounds: { windowState: 'normal' } });
-        await this.gonder('Browser.setWindowBounds', { windowId, bounds: { left: 90, top: 50, width: 1280, height: 880 } });
+        // A brand-new window can still be put back where Chrome first meant to show it (seen: on another screen), and a move to a
+        // screen with other scaling keeps the old size. So: set, read back, set again, until it sits where it should (a few tries).
+        const yer = pencereYeri(ekran);
+        for (let i = 0; i < 4; i++) {
+          await this.gonder('Browser.setWindowBounds', { windowId, bounds: yer });
+          await bekle(200);
+          const { bounds } = await this.gonder('Browser.getWindowBounds', { windowId });
+          if (['left', 'top', 'width', 'height'].every((k) => Math.abs(bounds[k] - yer[k]) <= 2)) break;
+        }
         await this.gonder('Target.activateTarget', { targetId });
       } catch (e) { this.gunluk('window could not be shown: ' + e.message); }
     }
@@ -370,4 +414,4 @@ class Tarayici {
   }
 }
 
-module.exports = { Tarayici, BAYRAKLAR, tarayiciBul };
+module.exports = { Tarayici, BAYRAKLAR, tarayiciBul, pencereYeri };

@@ -50,7 +50,7 @@ const siteSunucu = http.createServer((q, c) => {
 });
 
 // --------------------------------------------------------------- sahte yardimci (PageSirenAlarm.exe'nin yerine)
-const yrd = { acik: true, alarmlar: [], ozetler: [], komutlar: [], yollar: [] };
+const yrd = { acik: true, alarmlar: [], ozetler: [], komutlar: [], yollar: [], oneGetir: [] };
 const yrdSunucu = http.createServer((q, c) => {
   const parcalar = [];
   q.on('data', (p) => parcalar.push(p));
@@ -62,6 +62,7 @@ const yrdSunucu = http.createServer((q, c) => {
     if (q.url === '/alarm') { yrd.alarmlar.push(JSON.parse(govde)); return j(200, { ok: true }); }
     if (q.url === '/ozet?kaynak=mini') { yrd.ozetler.push(JSON.parse(govde)); return j(200, { ok: true }); }
     if (q.url === '/komutlar?kaynak=mini') return j(200, yrd.komutlar.splice(0));
+    if (q.url === '/one-getir') { yrd.oneGetir.push(JSON.parse(govde)); return j(200, { ok: true, pencere: 0 }); }
     if (q.url === '/durum') return j(200, { ok: true });
     if (q.url === '/kapat') return j(200, { ok: true });
     return j(404, {});
@@ -136,6 +137,9 @@ const logOku = () => { try { return fs.readFileSync(path.join(veri, 'pagesiren.l
   let r = await fetch('http://127.0.0.1:' + UI_PORT + '/');
   let m = await r.text();
   ok('ekran aciliyor, chrome yerine yerel kopru yuklu', r.status === 200 && m.includes('/krom.js') && m.includes('/dashboard.js'), m.slice(0, 200));
+  // "en" yazan Turkce ekrani tarayici Ingilizce sanip cevirmeye kalkiyordu: sayfa arayuzun diliyle gider
+  ok('ekran arayuzun diliyle sunulur', /<html lang="tr">/.test(m) && !/<html lang="en">/.test(m), m.slice(0, 80));
+  ok('alarm penceresi de', /<html lang="tr">/.test(await (await fetch('http://127.0.0.1:' + UI_PORT + '/alarm')).text()));
   const krom = await (await fetch('http://127.0.0.1:' + UI_PORT + '/krom.js')).text();
   ok('kopru mesajlari /mesaj adresine yollar', /sendMessage/.test(krom) && /\/mesaj/.test(krom));
   r = await fetch('http://127.0.0.1:' + UI_PORT + '/mesaj', { method: 'POST', headers: { Origin: 'https://kotu.example', 'Content-Type': 'text/plain' }, body: JSON.stringify({ tip: 'LISTE' }) });
@@ -212,8 +216,13 @@ const logOku = () => { try { return fs.readFileSync(path.join(veri, 'pagesiren.l
   await bekleKadar(async () => (await izlemeBul(acma.id)).sonKontrol > 0, 40000);
   site.istekler.length = 0;
   await mesaj({ tip: 'DURAKLAT', id: acma.id });
-  const acCevap = await mesaj({ tip: 'SITE_AC', id: acma.id });
+  const acCevap = await mesaj({ tip: 'SITE_AC', id: acma.id, ekran: { sol: -1920, ust: 0, en: 1920, boy: 1040 } });
   ok('site acildi', acCevap.ok === true && await bekleKadar(() => site.istekler.some((i) => i.yol === '/acilan-site'), 15000), JSON.stringify(site.istekler));
+  if (process.platform === 'win32') {
+    ok('pencere one alinsin diye yardimciya tarayicinin sureci gitti', await bekleKadar(() => yrd.oneGetir.some((o) => Number.isInteger(o.pid) && o.pid > 0), 5000), JSON.stringify(yrd.oneGetir));
+  }
+  const tuhaf = await mesaj({ tip: 'SITE_AC', id: acma.id, ekran: { sol: 'x', ust: 1e9, en: -5, boy: null } });
+  ok('anlamsiz ekran bilgisi bir sey bozmaz', tuhaf.ok === true, JSON.stringify(tuhaf));
   await bekle(2500); // bosta suresi 1,5 sn
   ok('gorunur pencere varken tarayici acik kalir', (await saglik()).tarayici === true, JSON.stringify(await saglik()));
 

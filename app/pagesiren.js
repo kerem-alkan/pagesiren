@@ -156,6 +156,7 @@ function yardimciyiBaslat() {
 
 // Browser alarm window (no helper): the app-mode window reads the list from /alarm-listesi and closes when it is empty.
 const tarayiciAlarmlari = [];
+let panelEkrani = null; // the dashboard's screen at the last "Open" (see ekranOku)
 let alarmPenceresi = null;
 let alarmPenceresiSayisi = 0;
 function tarayiciAlarmi(govde) {
@@ -401,7 +402,7 @@ globalThis.chrome = {
       const url = o.url || 'about:blank';
       // A site the user asked for (the "Open" button): a VISIBLE window on the reader profile. Login / verification happens there, later reads pass too.
       if (o.active && !yerelMi(url)) {
-        tarayici.gorunurAc(url).catch((e) => gunluk('window could not open: ' + e.message));
+        tarayici.gorunurAc(url, panelEkrani).then(pencereyiOneAl).catch((e) => gunluk('window could not open: ' + e.message));
         return { id: -1, windowId: 2, url, status: 'loading' };
       }
       const t = { id: ++sonSekme, windowId: o.windowId || IZLEME_PENCERESI, url: 'about:blank', status: 'complete' };
@@ -484,6 +485,28 @@ const KROM_JS = 'window.__PAGESIREN_APP=true;window.chrome=window.chrome||{};chr
 
 function hostDogru(host) { return host === '127.0.0.1:' + UI_PORT || host === 'localhost:' + UI_PORT; } // against DNS rebinding attacks
 
+// The page goes out with the interface language in <html lang>. With the old fixed "en", a browser set to translate English took the
+// Turkish screen for English and garbled it, again at every redraw. (T.dil() is always one of the dictionary codes.)
+function dilliSayfa(html) { return html.replace('<html lang="en">', '<html lang="' + (globalThis.T ? T.dil() : 'en') + '">'); }
+
+// The screen the dashboard is on, sent with "Open" (SITE_AC): the reader's window opens there (panelEkrani). Plain numbers or nothing.
+function ekranOku(e) {
+  if (!e || typeof e !== 'object') return null;
+  const [sol, ust, en, boy] = [e.sol, e.ust, e.en, e.boy].map(Number);
+  if (![sol, ust, en, boy].every(Number.isFinite) || Math.abs(sol) > 50000 || Math.abs(ust) > 50000 || en < 400 || boy < 300 || en > 20000 || boy > 20000) return null;
+  return { sol: Math.round(sol), ust: Math.round(ust), en: Math.round(en), boy: Math.round(boy) };
+}
+
+// Windows doesn't let a program in the background bring its window to the front right after the user clicked somewhere else,
+// so the "Open" window came up behind the dashboard. The helper raises it (the stacking order may be changed); without it, it stays as it was.
+async function pencereyiOneAl() {
+  const pid = tarayici.surecNo();
+  if (process.platform !== 'win32' || !YARDIMCI_VAR || !pid) return;
+  try {
+    await gercekFetch(YARDIMCI + '/one-getir', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pid }), signal: AbortSignal.timeout(1500) });
+  } catch (e) { /* the window is open either way */ }
+}
+
 const sunucu = http.createServer((q, c) => {
   const yanit = (kod, tip, govde) => { c.writeHead(kod, { 'Content-Type': tip, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' }); c.end(govde); };
   const json = (kod, o) => yanit(kod, 'application/json; charset=utf-8', JSON.stringify(o));
@@ -491,11 +514,11 @@ const sunucu = http.createServer((q, c) => {
   const yol = q.url.split('?')[0];
   if (q.method === 'GET') {
     if (yol === '/' || yol === '/dashboard.html') {
-      const html = fs.readFileSync(path.join(EKLENTI, 'dashboard.html'), 'utf8').replace('<script src="dashboard.js"></script>', '<script src="/krom.js"></script><script src="/dashboard.js"></script>');
+      const html = dilliSayfa(fs.readFileSync(path.join(EKLENTI, 'dashboard.html'), 'utf8')).replace('<script src="dashboard.js"></script>', '<script src="/krom.js"></script><script src="/dashboard.js"></script>');
       return yanit(200, 'text/html; charset=utf-8', html);
     }
     if (yol === '/krom.js') return yanit(200, 'text/javascript; charset=utf-8', KROM_JS);
-    if (yol === '/alarm') return yanit(200, 'text/html; charset=utf-8', fs.readFileSync(path.join(__dirname, 'alarm.html')));
+    if (yol === '/alarm') return yanit(200, 'text/html; charset=utf-8', dilliSayfa(fs.readFileSync(path.join(__dirname, 'alarm.html'), 'utf8')));
     if (yol === '/alarm-listesi') return json(200, { dil: globalThis.T ? T.dil() : 'en', alarmlar: tarayiciAlarmlari });
     if (SUNULAN[yol]) { try { return yanit(200, SUNULAN[yol], fs.readFileSync(path.join(EKLENTI, yol.slice(1)))); } catch (e) { return json(404, {}); } }
     if (yol === '/saglik') return json(200, { ok: true, surum: manifest.version, pid: process.pid, tarayici: tarayici.calisiyorMu(), sekme: sekmeler.size, bekleyenAlarm: bekleyenAlarm.length, alarmPenceresi: alarmPenceresiSayisi, sonOkumaSn: Math.round((Date.now() - sonBasariliOkuma) / 1000), rssMb: Math.round(process.memoryUsage().rss / 1048576) });
@@ -524,6 +547,7 @@ const sunucu = http.createServer((q, c) => {
           return json(200, sonuc);
         }
         const m = JSON.parse(Buffer.concat(parcalar).toString('utf8'));
+        if (m && m.tip === 'SITE_AC') panelEkrani = ekranOku(m.ekran);
         const cevap = m && Object.hasOwn(UYGULAMA_ISTEKLERI, m.tip) ? await UYGULAMA_ISTEKLERI[m.tip](m) : await self.__PAGESIREN.islem(m);
         json(200, cevap === undefined ? {} : cevap);
       } catch (e) { json(500, { hata: String(e && e.message || e) }); }

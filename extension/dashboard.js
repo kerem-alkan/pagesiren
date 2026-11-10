@@ -19,8 +19,12 @@
 
 const $ = (s) => document.querySelector(s);
 const el = (tag, sinif, yazi) => { const e = document.createElement(tag); if (sinif) e.className = sinif; if (yazi != null) e.textContent = yazi; return e; };
+// The user's own data (watch names, addresses, the page's own lines): a browser translating the screen leaves these as they are
+const veri = (e) => { e.translate = false; return e; };
 const istek = (m) => chrome.runtime.sendMessage(m);
 const UYGULAMA = !!window.__PAGESIREN_APP;
+// The version this screen was loaded with (in the app: the program's version when it served the page)
+const yukluSurum = UYGULAMA && chrome.runtime.getManifest ? chrome.runtime.getManifest().version : null;
 
 // the badge on a card ('Paused' is the name of the filter, so the badge says 'On hold')
 const DURUM = { izleniyor: 'Watching', hazirlaniyor: 'Getting ready', duraklatildi: 'On hold', sorun: 'Problem', degisti: 'Changed' };
@@ -68,6 +72,21 @@ function metinleriCevir() {
   ekleAraligiYaz();
 }
 
+// After an update the program serves a new screen, but a tab left open kept running the old one (with the old card layout).
+// It reloads itself once nothing is being typed or edited. Once per version, so a mismatch can never make it loop.
+function yenisiniYukle(surum) {
+  if (!yukluSurum || !surum || surum === yukluSurum || detayKutu.open) return false;
+  const a = document.activeElement;
+  if (a && (a.tagName === 'TEXTAREA' || a.tagName === 'SELECT' || (a.tagName === 'INPUT' && !['range', 'checkbox', 'button'].includes(a.type)))) return false;
+  if ([...document.querySelectorAll('#ekleBlok input[type=text], #ekleBlok input[type=url]')].some((i) => i.value.trim())) return false;
+  try {
+    if (sessionStorage.getItem('pagesiren.yenilendi') === surum) return false;
+    sessionStorage.setItem('pagesiren.yenilendi', surum);
+  } catch (e) { return false; }
+  location.reload();
+  return true;
+}
+
 // The redraw replaces the cards: the focused control is found again by its data-odak key.
 const odakAnahtari = () => { const e = document.activeElement; return e && e.dataset ? e.dataset.odak || null : null; };
 function odagiGeriVer(k) {
@@ -80,6 +99,7 @@ async function ciz() {
   if (kilitli || suruklenen) return;
   const d = await istek({ tip: 'LISTE', hafif: true });
   if (!d || d.hata) return;
+  if (yenisiniYukle(d.surum)) return;
   son = d;
   if (d.dil && d.dil !== T.dil() || ilkCizim) { T.dil(d.dil); metinleriCevir(); }
   $('#surum').textContent = T('version {v}', { v: d.surum || '?' });
@@ -157,15 +177,15 @@ function alarmlariCiz(d) {
   $('#alarmBolumu').hidden = !acik.length;
   for (const a of acik) {
     const k = el('article', 'kart alarm');
-    k.appendChild(el('h3', 'alarmBaslik', '🔔 ' + a.ad));
+    k.appendChild(veri(el('h3', 'alarmBaslik', '🔔 ' + a.ad)));
     k.appendChild(el('div', 'meta', saat(a.zaman)));
     const u = el('ul', 'satirlar');
-    for (const s of a.satirlar || []) u.appendChild(el('li', null, s));
+    for (const s of a.satirlar || []) u.appendChild(veri(el('li', null, s)));
     k.appendChild(u);
     const sr = el('div', 'dugmeler');
     const bAc = dugme(T('Open site'), 'ana', 'alarm-ac-' + a.id);
     // A lost session is fixed in the reader's own window: that is where the login must happen
-    bAc.onclick = () => { if (UYGULAMA && (a.anahtarlar || []).includes('oturum')) gonder({ tip: 'SITE_AC', id: a.izId }); else window.open(a.url, '_blank'); };
+    bAc.onclick = () => { if (UYGULAMA && (a.anahtarlar || []).includes('oturum')) siteAc(a.izId); else window.open(a.url, '_blank'); };
     const bAldim = dugme(T('✓ Got it — stop watching'), null, 'alarm-aldim-' + a.id);
     bAldim.onclick = async () => { await kapat(a.id, 'aldim'); tost(T('{ad} moved to Got it.', { ad: a.ad }), () => istek({ tip: 'GERIAL', id: a.izId })); };
     const bYanlis = dugme(T('False alarm — don\'t ask again'), null, 'alarm-yanlis-' + a.id);
@@ -213,7 +233,7 @@ function izlemeKarti(x) {
   const k = el('article', 'kart tiklanir d-' + durum);
   const ust = el('div', 'kartUst');
   const nokta = el('span', 'nokta'); nokta.setAttribute('aria-hidden', 'true');
-  ust.append(nokta, el('h3', 'kartAd', x.ad), el('span', 'rozet', T(DURUM[durum] || 'Watching')));
+  ust.append(nokta, veri(el('h3', 'kartAd', x.ad)), el('span', 'rozet', T(DURUM[durum] || 'Watching')));
   k.appendChild(ust);
   const meta = metaYazisi(x);
   if (meta) k.appendChild(el('div', 'meta', meta));
@@ -258,7 +278,7 @@ function eylemler(x, onEk) {
   const dg = el('div', 'dugmeler');
   const bAc = dugme(T('Open'), null, onEk + 'ac-' + x.id);
   // A site the extension reads opens in the user's own browser (the session is there); others in the reader's window
-  bAc.onclick = () => { if (x.okuyucu === 'eklenti') window.open(x.url, '_blank'); else gonder({ tip: 'SITE_AC', id: x.id }); };
+  bAc.onclick = () => { if (x.okuyucu === 'eklenti') window.open(x.url, '_blank'); else siteAc(x.id); };
   dg.appendChild(bAc);
   if (x.aktif) {
     const bDur = dugme(T('Pause'), null, onEk + 'dur-' + x.id); bDur.onclick = () => gonder({ tip: 'DURAKLAT', id: x.id });
@@ -327,6 +347,7 @@ function detayUst(x, baslik) {
   const ust = el('div', 'cekmeceUst d-' + durum);
   const nokta = el('span', 'nokta'); nokta.setAttribute('aria-hidden', 'true');
   const h = el('h2', 'cekmeceBaslik', baslik || x.ad); h.id = 'detayBaslik';
+  if (!baslik) veri(h);
   ust.append(nokta, h);
   if (!baslik) ust.appendChild(el('span', 'rozet', T(DURUM[durum] || 'Watching')));
   const k = dugme('×', 'kapatX', 'detay-kapat');
@@ -355,7 +376,7 @@ function detayCiz(x, zorla) {
   if (x.sorun && x.aktif) govde.appendChild(el('div', 'sorun', '⚠ ' + x.sorun));
   govde.appendChild(el('div', 'meta', metaYazisi(x)));
   const adres = el('div', 'adres');
-  const a = el('a', null, x.url); a.href = x.url; a.target = '_blank'; a.rel = 'noopener';
+  const a = veri(el('a', null, x.url)); a.href = x.url; a.target = '_blank'; a.rel = 'noopener';
   adres.append(T('Address') + ': ', a);
   govde.appendChild(adres);
   const bilgi = bilgiYazisi(x);
@@ -387,7 +408,7 @@ async function gecmisiCiz(kutu, x) {
     const li = el('li');
     li.append(el('span', 'zaman', saat(al.zaman)), ' · ' + T(DURUM_ADI[al.durum] || al.durum));
     const u = el('ul', 'satirlar');
-    for (const s0 of (al.satirlar || []).slice(0, 4)) u.appendChild(el('li', null, s0));
+    for (const s0 of (al.satirlar || []).slice(0, 4)) u.appendChild(veri(el('li', null, s0)));
     li.appendChild(u);
     ol.appendChild(li);
   }
@@ -432,14 +453,14 @@ function arsivKarti(x) {
   const k = el('article', 'kart');
   const ust = el('div', 'kartUst');
   const nokta = el('span', 'nokta'); nokta.setAttribute('aria-hidden', 'true');
-  ust.append(nokta, el('h3', 'kartAd', x.ad));
+  ust.append(nokta, veri(el('h3', 'kartAd', x.ad)));
   k.appendChild(ust);
   const meta = [alindi ? T('Got it {t}', { t: saat(x.alinma) }) : T('Deleted {t}', { t: saat(x.silinme) })];
   if (x.olusturma) meta.push(T('Added {t}', { t: saat(x.olusturma) }));
   if (x.alarmSay) meta.push(T('Alarms: {n} · last {t}', { n: x.alarmSay, t: saat(x.sonAlarm) }));
   k.appendChild(el('div', 'meta', meta.join(' · ')));
   const adres = el('div', 'adres');
-  const a = el('a', null, hostu(x.url)); a.href = x.url; a.target = '_blank'; a.rel = 'noopener';
+  const a = veri(el('a', null, hostu(x.url))); a.href = x.url; a.target = '_blank'; a.rel = 'noopener';
   adres.appendChild(a);
   k.appendChild(adres);
   const dg = el('div', 'dugmeler');
@@ -497,6 +518,12 @@ function duzenleGovde(x) {
 }
 
 async function gonder(m) { kilitli = false; await istek(m); ciz(); }
+// "Open" for a page the app reads: it opens in the reader's own window, where a login or a check is passed once for later reads too.
+// The window comes up on the screen this page is on (it used to open on the main screen, behind the other windows).
+function siteAc(id) {
+  if (UYGULAMA) tost(T('Opening the page in PageSiren’s own window…'));
+  return gonder({ tip: 'SITE_AC', id, ekran: { sol: screen.availLeft || 0, ust: screen.availTop || 0, en: screen.availWidth, boy: screen.availHeight } });
+}
 async function kapat(id, islem) { await istek({ tip: 'ALARM_KAPAT', alarmId: id, islem }); ciz(); }
 
 // A short note at the bottom, with Undo where it can be undone
@@ -650,6 +677,11 @@ $('#bildirimKaydet').onclick = async () => {
 };
 
 (async () => {
+  // The texts are put into the screen's language right away, before the page has even finished loading. A browser that saw the English
+  // source texts first took the page for English and translated the Turkish texts drawn after it as if they were English
+  // ("her değişiklikte" became "onun yedek"), again at every redraw. The app serves the page with its language already in <html lang>.
+  if (UYGULAMA) T.dil(document.documentElement.lang || '');
+  metinleriCevir();
   if (UYGULAMA) {
     for (const e of document.querySelectorAll('.sadeceUygulama')) e.hidden = false;
     uygulamaDurumu = await istek({ tip: 'APP_DURUM' });

@@ -93,6 +93,13 @@ async function durdur(c) {
   await yolla('/komut?kaynak=eklenti', { tip: 'BASLAT', id: 'y' });
   k = await alJson('/komutlar');
   ok('?kaynak=eklenti ile eklentiye gider', k.length === 1 && k[0].tip === 'BASLAT', JSON.stringify(k));
+  console.log('2b) "Ac" penceresini one alma: sadece Origin\'siz yerel istek, sadece tarayici sureci');
+  ok('web sayfasi ya da eklenti pencere oynatamaz', (await yolla('/one-getir', { pid: process.pid }, { Origin: 'chrome-extension://abc' })) === 403);
+  const one = async (govde) => (await fetch('http://127.0.0.1:' + PORT + '/one-getir', { method: 'POST', body: govde })).json();
+  let og = await one(JSON.stringify({ pid: process.pid }));
+  ok('tarayici olmayan surecin penceresine dokunulmaz', og.ok === true && og.pencere === 0, JSON.stringify(og));
+  og = await one('{}');
+  ok('pid yoksa bir sey yapmaz', og.ok === true && og.pencere === 0, JSON.stringify(og));
   console.log('3) Alarm: test modunda dosyaya yazilir (pencere yok)');
   await yolla('/alarm', { ad: 'Konser', satirlar: ['a'], url: 'http://x' });
   ok('alarm geldi', alarmlar().length === 1 && alarmlar()[0].ad === 'Konser', JSON.stringify(alarmlar()));

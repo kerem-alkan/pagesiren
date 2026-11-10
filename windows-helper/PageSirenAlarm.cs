@@ -17,6 +17,8 @@
 //   GET  /ozet      -> latest summary (watches, open alarms, tabs, last alarms; full backup on DISA_AKTAR). The app's if it's running;
 //                      choose with ?kaynak=mini / ?kaynak=eklenti
 //   POST /komut     one JSON object; ONLY local requests without an Origin header (web pages can't write). Goes to the app if it's running
+//   POST /one-getir {pid} -> raises the reading browser's visible windows (the "Open" button's window) above the others; origin-less only.
+//                      -> {"ok":true,"pencere":<windows raised>}. Only a chrome / msedge / brave process; minimized or off-screen windows stay.
 //   GET  /komutlar  -> pending commands (receiver: ?kaynak=mini or eklenti; the queue empties)
 // Security: if Origin is present and isn't chrome-extension://, 403. NOT open to the network. No authentication,
 //   so never expose this port.
@@ -212,6 +214,15 @@ static class Program
                 Cevap(s, 200, "{\"ok\":true}", koken);
                 return;
             }
+            if (yontem == "POST" && yol.StartsWith("/one-getir"))
+            {
+                // Local tools only (pagesiren.js after "Open"): a web page or an extension can't move windows
+                if (koken != "") { Cevap(s, 403, "{\"ok\":false}", koken); return; }
+                Match pm = Regex.Match(metin, "\"pid\"\\s*:\\s*(\\d{1,9})");
+                int n = pm.Success ? OneGetir(int.Parse(pm.Groups[1].Value)) : 0;
+                Cevap(s, 200, "{\"ok\":true,\"pencere\":" + n + "}", koken);
+                return;
+            }
             if (yontem == "GET" && yol.StartsWith("/komutlar"))
             {
                 string json;
@@ -362,6 +373,52 @@ static class Program
     static extern bool CreateProcess(string uyg, StringBuilder komut, IntPtr a, IntPtr b, bool miras, uint bayrak, IntPtr ortam, string dizin, ref BASLATMA si, out SUREC pi);
     [DllImport("kernel32.dll")]
     static extern bool CloseHandle(IntPtr h);
+
+    // --- the "Open" button's window. Windows won't let a program in the background take the foreground right after the user clicked
+    // somewhere else, so the window opened behind the dashboard. Moving a window up in the stacking order is allowed: it goes to the top
+    // of the always-on-top band and straight back down, which leaves it above every ordinary window. Then the foreground is asked for,
+    // which Windows may refuse (the taskbar button flashes then).
+    delegate bool PencereSayici(IntPtr h, IntPtr l);
+    [StructLayout(LayoutKind.Sequential)]
+    struct DORTGEN { public int sol, ust, sag, alt; }
+    [DllImport("user32.dll")] static extern bool EnumWindows(PencereSayici cb, IntPtr l);
+    [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
+    [DllImport("user32.dll")] static extern bool IsWindowVisible(IntPtr h);
+    [DllImport("user32.dll")] static extern bool IsIconic(IntPtr h);
+    [DllImport("user32.dll")] static extern bool GetWindowRect(IntPtr h, out DORTGEN r);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern int GetClassName(IntPtr h, StringBuilder s, int n);
+    [DllImport("user32.dll")] static extern bool SetWindowPos(IntPtr h, IntPtr sonra, int x, int y, int g, int y2, uint bayrak);
+    [DllImport("user32.dll")] static extern bool SetForegroundWindow(IntPtr h);
+
+    static int OneGetir(int pid)
+    {
+        string ad;
+        try { using (Process p = Process.GetProcessById(pid)) ad = p.ProcessName.ToLowerInvariant(); } catch { return 0; }
+        if (ad != "chrome" && ad != "msedge" && ad != "brave") return 0;
+        List<IntPtr> bulunan = new List<IntPtr>();
+        EnumWindows(delegate (IntPtr h, IntPtr l)
+        {
+            uint sahip;
+            GetWindowThreadProcessId(h, out sahip);
+            if (sahip != (uint)pid || !IsWindowVisible(h) || IsIconic(h)) return true;
+            DORTGEN r;
+            // the reading window waits minimized and off-screen; small ones are bubbles ("Translate this page?")
+            if (!GetWindowRect(h, out r) || r.sag - r.sol < 300 || r.alt - r.ust < 200 || r.sol < -10000 || r.ust < -10000) return true;
+            StringBuilder sinif = new StringBuilder(64);
+            GetClassName(h, sinif, 64);
+            if (sinif.ToString().StartsWith("Chrome_WidgetWin")) bulunan.Add(h);
+            return true;
+        }, IntPtr.Zero);
+        const uint YERINDE = 0x0001 | 0x0002 | 0x0010; // SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE
+        foreach (IntPtr h in bulunan)
+        {
+            SetWindowPos(h, new IntPtr(-1), 0, 0, 0, 0, YERINDE); // HWND_TOPMOST
+            SetWindowPos(h, new IntPtr(-2), 0, 0, 0, 0, YERINDE); // HWND_NOTOPMOST
+        }
+        if (bulunan.Count > 0) SetForegroundWindow(bulunan[0]);
+        Kaydet("Open window raised: " + bulunan.Count);
+        return bulunan.Count;
+    }
 
     static void MiniBaslat()
     {
