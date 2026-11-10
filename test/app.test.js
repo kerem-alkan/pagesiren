@@ -158,7 +158,8 @@ const logOku = () => { try { return fs.readFileSync(path.join(veri, 'pagesiren.l
   yrd.komutlar.push({ tip: 'EKLE', ad: 'jsli', url: adres('/js'), aralikSn: 30 });
   const jsIz = await bekleKadar(async () => (await liste()).izlemeler.find((x) => x.ad === 'jsli'), 8000);
   ok('komut kuyrugu okundu, izleme eklendi', !!jsIz);
-  const okundu = await bekleKadar(async () => { const x = await izlemeBul(jsIz.id); return x.durum === 'izleniyor' ? x : null; }, 30000);
+  // the first read starts a fresh browser on a fresh profile: once it took 30.4 s on a slow ubuntu runner
+  const okundu = await bekleKadar(async () => { const x = await izlemeBul(jsIz.id); return x.durum === 'izleniyor' ? x : null; }, 60000);
   ok('tarayici ile okundu, taban alindi', !!okundu, JSON.stringify(await izlemeBul(jsIz.id)) + logOku().slice(-1200));
   ok('sayfanin JS ile doldurdugu icerik goruldu (ozette oge var)', !!okundu && /öğe/.test(okundu.ozet || ''), okundu && okundu.ozet);
   const jsIstek = site.istekler.find((i) => i.yol === '/js');
