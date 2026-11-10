@@ -11,6 +11,7 @@ permissions:
   contents: write
   id-token: write
   attestations: write
+  actions: read
 jobs:
   windows:
     name: Windows installer
@@ -36,6 +37,22 @@ jobs:
       - uses: actions/attest-build-provenance@v4
         with:
           subject-path: dist/PageSiren-Setup.exe
+      - name: Wait until this commit's tests have passed
+        shell: bash
+        # A version tag can be pushed right away: nothing is published before the tests of the same commit have passed.
+        run: |
+          sha=$(git rev-parse HEAD)
+          for i in $(seq 1 120); do
+            r=$(gh run list -R "$GITHUB_REPOSITORY" --workflow ci.yml --commit "$sha" --limit 1 --json status,conclusion --jq '.[0] | .status + " " + .conclusion' 2>/dev/null || true)
+            case "$r" in
+              "completed success") echo "The tests of $sha passed."; exit 0;;
+              completed*) echo "The tests of $sha did not pass ($r): nothing is published."; exit 1;;
+            esac
+            echo "Waiting for the tests of $sha (${r:-not started})"
+            sleep 20
+          done
+          echo "The tests of $sha did not finish within 40 minutes."
+          exit 1
       - name: Publish
         shell: bash
         # GitHub can answer with a passing server error (it did once, during an outage): try three times
