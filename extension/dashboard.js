@@ -27,7 +27,6 @@ const DURUM = { izleniyor: 'Watching', hazirlaniyor: 'Getting ready', duraklatil
 const DURUM_ADI = { yeni: 'OPEN', aldim: 'got it', yanlis: 'false alarm', gec: 'dismissed', yoksay: 'ignored', tamam: 'closed' };
 // the slider's steps: seconds, minutes, hours, a day
 const ARALIKLAR = [30, 60, 120, 180, 300, 600, 900, 1800, 3600, 7200, 10800, 21600, 43200, 86400];
-const SIRA = { degisti: 0, sorun: 1, hazirlaniyor: 2, izleniyor: 3 };
 const sayiYaz = (n) => String(Math.round(n * 10) / 10).replace('.', T.dil() === 'en' ? '.' : ',');
 const aralikAdi = (sn) => (sn < 60 ? T('{n} s', { n: sn }) : sn < 3600 ? T('{n} min', { n: sayiYaz(sn / 60) })
   : sn < 86400 ? T('{n} h', { n: sayiYaz(sn / 3600) }) : T('{n} d', { n: sayiYaz(sn / 86400) }));
@@ -51,7 +50,8 @@ let son = null;
 let filtre = (() => { try { return localStorage.getItem('pagesiren.filtre') || 'hepsi'; } catch (e) { return 'hepsi'; } })();
 if (!FILTRELER.some((f) => f.ad === filtre)) filtre = 'hepsi';
 let arama = '';
-const acikKartlar = new Set();
+let detay = null;           // the watch whose details panel is open: { id, mod: 'bilgi' | 'duzenle', imza, acan }
+const detayKutu = $('#detay');
 const gecmisler = new Map(); // watch id -> { say, alarmlar }
 let kilitli = false;         // a card is being edited: a redraw must not throw the typing away
 let suruklenen = false;      // a slider is being dragged
@@ -107,6 +107,7 @@ async function ciz() {
   filtreleriCiz(d);
   alarmlariCiz(d);
   listeyiCiz(d);
+  if (detay && detayKutu.open) { const x = d.izlemeler.find((i) => i.id === detay.id); if (x) detayCiz(x); else detayKutu.close(); }
   odagiGeriVer(odak);
 
   // settings (filled once: a redraw must not overwrite what the user is typing)
@@ -190,9 +191,9 @@ function listeyiCiz(d) {
     if (!kayitlar.length) liste.appendChild(el('div', 'bos', T('No watches here.')));
     return;
   }
-  const sira = (x) => (x.aktif ? (SIRA[x.durum] ?? 3) : 4);
-  const izler = d.izlemeler.map((x, i) => [x, i]).filter(([x]) => f.uyar(x) && bulur(x))
-    .sort((a, b) => sira(a[0]) - sira(b[0]) || a[1] - b[1]).map(([x]) => x);
+  // The order never changes by itself: a card whose state changes must not jump away from under the pointer.
+  // What needs attention is at the top anyway, as an open alarm, and in the Problems filter.
+  const izler = d.izlemeler.filter((x) => f.uyar(x) && bulur(x));
   for (const x of izler) liste.appendChild(izlemeKarti(x));
   if (!izler.length) {
     const bos = el('div', 'bos', T(d.izlemeler.length ? 'No watches here.' : 'No watches yet. Add a page with the button above.'));
@@ -209,68 +210,164 @@ function dugme(yazi, sinif, odak) {
 
 function izlemeKarti(x) {
   const durum = x.aktif ? x.durum : 'duraklatildi';
-  const acik = acikKartlar.has(x.id);
-  const k = el('article', 'kart tiklanir d-' + durum + (acik ? ' acik' : ''));
+  const k = el('article', 'kart tiklanir d-' + durum);
   const ust = el('div', 'kartUst');
   const nokta = el('span', 'nokta'); nokta.setAttribute('aria-hidden', 'true');
   ust.append(nokta, el('h3', 'kartAd', x.ad), el('span', 'rozet', T(DURUM[durum] || 'Watching')));
   k.appendChild(ust);
-
-  const meta = [];
-  if (x.olusturma) meta.push(T('Added {t}', { t: saat(x.olusturma) }));
-  if (x.sonKontrol) meta.push(T('last read: {t} ago', { t: sure(Date.now() - x.sonKontrol) }));
-  if (x.alarmSay) meta.push(T('Alarms: {n} · last {t}', { n: x.alarmSay, t: saat(x.sonAlarm) }));
-  if (meta.length) k.appendChild(el('div', 'meta', meta.join(' · ')));
+  const meta = metaYazisi(x);
+  if (meta) k.appendChild(el('div', 'meta', meta));
   if (x.ozet && x.aktif) k.appendChild(el('div', 'ozet', x.ozet));
   if (x.sorun && x.aktif) k.appendChild(el('div', 'sorun', '⚠ ' + x.sorun));
-  const bilgi = [];
-  if (x.kelimeler) bilgi.push(T('words: {k}', { k: x.kelimeler }));
-  if (x.herDegisiklik) bilgi.push(T('alarm on every change'));
-  if (x.hizli) bilgi.push(T('fast mode'));
-  if (x.girisYazisi) bilgi.push(T('login check on'));
-  if (x.okuyucu) bilgi.push(T(x.okuyucu === 'http' ? 'read without a browser' : 'read by the Chrome extension'));
-  if (bilgi.length) k.appendChild(el('div', 'bilgi', bilgi.join(' · ')));
-  k.appendChild(aralikCubugu(x));
+  const bilgi = bilgiYazisi(x);
+  if (bilgi) k.appendChild(el('div', 'bilgi', bilgi));
+  k.appendChild(aralikCubugu(x, ''));
+  k.appendChild(eylemler(x, ''));
+  const gb = dugme(T('Details and alarms ({n})', { n: x.alarmSay || 0 }), 'gecmisAc ikincil', 'detay-' + x.id);
+  gb.setAttribute('aria-haspopup', 'dialog');
+  gb.onclick = () => detayAc(x.id, 'bilgi', 'detay-' + x.id);
+  k.appendChild(gb);
+  // a click on the card itself opens its details too; buttons and the slider keep their own clicks, and selecting text is not a click
+  k.addEventListener('click', (e) => {
+    if (e.target.closest('button, a, input, select, label, textarea, summary')) return;
+    if (String(window.getSelection ? window.getSelection() : '').trim()) return;
+    detayAc(x.id, 'bilgi', 'detay-' + x.id);
+  });
+  return k;
+}
 
+function metaYazisi(x) {
+  const m = [];
+  if (x.olusturma) m.push(T('Added {t}', { t: saat(x.olusturma) }));
+  if (x.sonKontrol) m.push(T('last read: {t} ago', { t: sure(Date.now() - x.sonKontrol) }));
+  if (x.alarmSay) m.push(T('Alarms: {n} · last {t}', { n: x.alarmSay, t: saat(x.sonAlarm) }));
+  return m.join(' · ');
+}
+function bilgiYazisi(x) {
+  const b = [];
+  if (x.kelimeler) b.push(T('words: {k}', { k: x.kelimeler }));
+  if (x.herDegisiklik) b.push(T('alarm on every change'));
+  if (x.hizli) b.push(T('fast mode'));
+  if (x.girisYazisi) b.push(T('login check on'));
+  if (x.okuyucu) b.push(T(x.okuyucu === 'http' ? 'read without a browser' : 'read by the Chrome extension'));
+  return b.join(' · ');
+}
+
+// A watch's buttons, on its card and in its details panel (onEk keeps their focus keys apart)
+function eylemler(x, onEk) {
   const dg = el('div', 'dugmeler');
-  const bAc = dugme(T('Open'), null, 'ac-' + x.id);
+  const bAc = dugme(T('Open'), null, onEk + 'ac-' + x.id);
   // A site the extension reads opens in the user's own browser (the session is there); others in the reader's window
   bAc.onclick = () => { if (x.okuyucu === 'eklenti') window.open(x.url, '_blank'); else gonder({ tip: 'SITE_AC', id: x.id }); };
   dg.appendChild(bAc);
   if (x.aktif) {
-    const bDur = dugme(T('Pause'), null, 'dur-' + x.id); bDur.onclick = () => gonder({ tip: 'DURAKLAT', id: x.id });
-    const bNob = dugme(T('↻ Re-arm'), null, 'nob-' + x.id); bNob.onclick = () => gonder({ tip: 'NOBET', id: x.id });
+    const bDur = dugme(T('Pause'), null, onEk + 'dur-' + x.id); bDur.onclick = () => gonder({ tip: 'DURAKLAT', id: x.id });
+    const bNob = dugme(T('↻ Re-arm'), null, onEk + 'nob-' + x.id); bNob.onclick = () => gonder({ tip: 'NOBET', id: x.id });
     dg.append(bDur, bNob);
   } else {
-    const bBas = dugme(T('▶ Start again'), null, 'bas-' + x.id); bBas.onclick = () => gonder({ tip: 'BASLAT', id: x.id });
+    const bBas = dugme(T('▶ Start again'), null, onEk + 'bas-' + x.id); bBas.onclick = () => gonder({ tip: 'BASLAT', id: x.id });
     dg.appendChild(bBas);
   }
-  const bDuz = dugme(T('Edit'), 'ikincil', 'duz-' + x.id); bDuz.onclick = () => duzenle(k, x);
-  const bAldim = dugme(T('✓ Got it'), 'ikincil', 'aldim-' + x.id);
-  bAldim.onclick = async () => { await istek({ tip: 'ALDIM', id: x.id }); tost(T('{ad} moved to Got it.', { ad: x.ad }), () => istek({ tip: 'GERIAL', id: x.id })); ciz(); };
-  const bSil = dugme(T('Delete'), 'ikincil tehlike', 'sil-' + x.id);
-  bSil.onclick = async () => { await istek({ tip: 'SIL', id: x.id }); tost(T('{ad} moved to Deleted.', { ad: x.ad }), () => istek({ tip: 'GERIAL', id: x.id })); ciz(); };
+  const bDuz = dugme(T('Edit'), 'ikincil', onEk + 'duz-' + x.id);
+  bDuz.onclick = () => { if (detay && detayKutu.open && detay.id === x.id) detayModu('duzenle'); else detayAc(x.id, 'duzenle', onEk + 'duz-' + x.id); };
+  const bAldim = dugme(T('✓ Got it'), 'ikincil', onEk + 'aldim-' + x.id);
+  bAldim.onclick = async () => {
+    await istek({ tip: 'ALDIM', id: x.id });
+    if (detayKutu.open) detayKutu.close();
+    tost(T('{ad} moved to Got it.', { ad: x.ad }), () => istek({ tip: 'GERIAL', id: x.id }));
+    ciz();
+  };
+  const bSil = dugme(T('Delete'), 'ikincil tehlike', onEk + 'sil-' + x.id);
+  bSil.onclick = async () => {
+    await istek({ tip: 'SIL', id: x.id });
+    if (detayKutu.open) detayKutu.close();
+    tost(T('{ad} moved to Deleted.', { ad: x.ad }), () => istek({ tip: 'GERIAL', id: x.id }));
+    ciz();
+  };
   dg.append(bDuz, bAldim, bSil);
-  k.appendChild(dg);
-
-  const gb = dugme(T('Alarm history ({n})', { n: x.alarmSay || 0 }), 'gecmisAc ikincil', 'gecmis-' + x.id);
-  gb.setAttribute('aria-expanded', String(acik));
-  gb.setAttribute('aria-controls', 'gc_' + x.id);
-  gb.onclick = () => kartiAcKapa(x.id);
-  k.appendChild(gb);
-  const gecmis = el('div', 'gecmis');
-  gecmis.id = 'gc_' + x.id;
-  gecmis.hidden = !acik;
-  if (acik) gecmisiCiz(gecmis, x);
-  k.appendChild(gecmis);
-  // a click on the card itself opens it too; the buttons, the slider and the history keep their own clicks
-  k.addEventListener('click', (e) => { if (!e.target.closest('button, a, input, select, label, textarea, summary, .gecmis')) kartiAcKapa(x.id); });
-  return k;
+  return dg;
 }
 
-function kartiAcKapa(id) {
-  if (acikKartlar.has(id)) acikKartlar.delete(id); else acikKartlar.add(id);
-  if (son) { const odak = odakAnahtari(); listeyiCiz(son); odagiGeriVer(odak); }
+// --- details: a panel that slides in from the right over the dimmed page, so the cards never move.
+// It is a modal dialog: Esc closes it, focus stays inside, and goes back to the button that opened it.
+function detayAc(id, mod, acan) {
+  const x = son && son.izlemeler.find((i) => i.id === id);
+  if (!x) return;
+  detay = { id, mod: mod || 'bilgi', imza: '', acan: acan || null };
+  kilitli = detay.mod === 'duzenle';
+  detayCiz(x, true);
+  if (!detayKutu.open) detayKutu.showModal();
+  odakla();
+}
+function detayModu(mod) {
+  if (!detay) return;
+  detay.mod = mod;
+  kilitli = mod === 'duzenle';
+  const x = son && son.izlemeler.find((i) => i.id === detay.id);
+  if (x) detayCiz(x, true);
+  odakla();
+}
+function odakla() {
+  const hedef = detay && detay.mod === 'duzenle' ? detayKutu.querySelector('input') : detayKutu.querySelector('.kapatX');
+  if (hedef) hedef.focus();
+}
+detayKutu.addEventListener('close', () => {
+  const acan = detay && detay.acan;
+  detay = null;
+  kilitli = false;
+  ciz().then(() => { if (acan) odagiGeriVer(acan); });
+});
+// a click on the dimmed page beside the panel closes it (the panel itself is covered by its children)
+detayKutu.addEventListener('click', (e) => { if (e.target === detayKutu) detayKutu.close(); });
+
+const detayImzasi = (x) => JSON.stringify([x.ad, x.url, x.aktif, x.durum, x.ozet, x.sorun, x.aralikSn, x.alarmSay, x.kelimeler, x.herDegisiklik, x.hizli, x.girisYazisi, x.okuyucu, T.dil()]);
+
+function detayUst(x, baslik) {
+  const durum = x.aktif ? x.durum : 'duraklatildi';
+  const ust = el('div', 'cekmeceUst d-' + durum);
+  const nokta = el('span', 'nokta'); nokta.setAttribute('aria-hidden', 'true');
+  const h = el('h2', 'cekmeceBaslik', baslik || x.ad); h.id = 'detayBaslik';
+  ust.append(nokta, h);
+  if (!baslik) ust.appendChild(el('span', 'rozet', T(DURUM[durum] || 'Watching')));
+  const k = dugme('×', 'kapatX', 'detay-kapat');
+  k.setAttribute('aria-label', T('Close'));
+  k.onclick = () => detayKutu.close();
+  ust.appendChild(k);
+  return ust;
+}
+
+// Redrawn only when something on it changed: reading the history must not jump every five seconds
+function detayCiz(x, zorla) {
+  if (!detay || detay.id !== x.id) return;
+  if (detay.mod === 'duzenle') { if (zorla) detayKutu.replaceChildren(detayUst(x, T('Edit')), duzenleGovde(x)); return; }
+  const imza = detayImzasi(x);
+  if (!zorla && imza === detay.imza) {
+    const m = detayKutu.querySelector('.cekmeceGovde > .meta');
+    if (m) m.textContent = metaYazisi(x);
+    return;
+  }
+  detay.imza = imza;
+  const eski = detayKutu.querySelector('.cekmeceGovde');
+  const kaydirma = eski ? eski.scrollTop : 0;
+  const odak = odakAnahtari();
+  const govde = el('div', 'cekmeceGovde');
+  if (x.ozet && x.aktif) govde.appendChild(el('div', 'ozet', x.ozet));
+  if (x.sorun && x.aktif) govde.appendChild(el('div', 'sorun', '⚠ ' + x.sorun));
+  govde.appendChild(el('div', 'meta', metaYazisi(x)));
+  const adres = el('div', 'adres');
+  const a = el('a', null, x.url); a.href = x.url; a.target = '_blank'; a.rel = 'noopener';
+  adres.append(T('Address') + ': ', a);
+  govde.appendChild(adres);
+  const bilgi = bilgiYazisi(x);
+  if (bilgi) govde.appendChild(el('div', 'bilgi', bilgi));
+  govde.appendChild(aralikCubugu(x, 'dt-'));
+  govde.appendChild(eylemler(x, 'dt-'));
+  const gecmis = el('section', 'gecmis');
+  govde.appendChild(gecmis);
+  detayKutu.replaceChildren(detayUst(x), govde);
+  govde.scrollTop = kaydirma;
+  odagiGeriVer(odak);
+  gecmisiCiz(gecmis, x).then(() => { govde.scrollTop = kaydirma; });
 }
 
 async function gecmisiCiz(kutu, x) {
@@ -283,18 +380,14 @@ async function gecmisiCiz(kutu, x) {
   }
   const { alarmlar } = gecmisler.get(x.id);
   kutu.textContent = '';
-  const adres = el('div', 'adres');
-  const a = el('a', null, x.url); a.href = x.url; a.target = '_blank'; a.rel = 'noopener';
-  adres.append(T('Address') + ': ', a);
-  kutu.appendChild(adres);
-  kutu.appendChild(el('h4', null, T('Alarm history')));
+  kutu.appendChild(el('h3', null, T('Alarm history')));
   if (!alarmlar.length) { kutu.appendChild(el('div', 'kucuk', T(say ? 'Older alarms are no longer kept.' : 'No alarms yet.'))); return; }
   const ol = el('ol');
   for (const al of alarmlar) {
     const li = el('li');
     li.append(el('span', 'zaman', saat(al.zaman)), ' · ' + T(DURUM_ADI[al.durum] || al.durum));
     const u = el('ul', 'satirlar');
-    for (const s of (al.satirlar || []).slice(0, 4)) u.appendChild(el('li', null, s));
+    for (const s0 of (al.satirlar || []).slice(0, 4)) u.appendChild(el('li', null, s0));
     li.appendChild(u);
     ol.appendChild(li);
   }
@@ -303,13 +396,13 @@ async function gecmisiCiz(kutu, x) {
 }
 
 // How often to check, from 30 seconds to a day. It applies from the next read.
-function aralikCubugu(x) {
+function aralikCubugu(x, onEk) {
   const sn0 = Number(x.aralikSn) || 300;
   const adimlar = ARALIKLAR.includes(sn0) ? ARALIKLAR : ARALIKLAR.concat(sn0).sort((a, b) => a - b);
   const kutu = el('div', 'aralik');
   const r = el('input');
-  r.type = 'range'; r.id = 'ar_' + x.id; r.min = '0'; r.max = String(adimlar.length - 1); r.step = '1';
-  r.value = String(adimlar.indexOf(sn0)); r.dataset.odak = 'aralik-' + x.id;
+  r.type = 'range'; r.id = 'ar_' + onEk + x.id; r.min = '0'; r.max = String(adimlar.length - 1); r.step = '1';
+  r.value = String(adimlar.indexOf(sn0)); r.dataset.odak = onEk + 'aralik-' + x.id;
   const etiket = el('label'); etiket.htmlFor = r.id;
   const deger = el('b');
   const [on, arka] = T('Checks every {t}').split('{t}');
@@ -360,9 +453,9 @@ function arsivKarti(x) {
 }
 
 let etiketSayac = 0;
-function duzenle(kart, x) {
-  kilitli = true;
-  const d = el('div');
+// The edit form, inside the details panel
+function duzenleGovde(x) {
+  const d = el('div', 'cekmeceGovde');
   const girdi = (tip, deger) => { const i = el('input'); i.type = tip; if (tip === 'checkbox') i.checked = !!deger; else i.value = deger || ''; return i; };
   const isaret = (kutu, yazi) => { const l = el('label', 'yan'); l.append(kutu, document.createTextNode(' ' + yazi)); return l; };
   const ad = girdi('text', x.ad);
@@ -374,7 +467,7 @@ function duzenle(kart, x) {
   const kalici = girdi('checkbox', x.kaliciSekme);
   // each label points at its box, so screen readers say what the box is for
   const etiket = (yazi, kutu) => { kutu.id = 'd_' + x.id + '_' + (++etiketSayac); const l = el('label', null, yazi); l.htmlFor = kutu.id; return l; };
-  d.append(el('h3', 'kartAd', T('Edit')), etiket(T('Name'), ad), ad, etiket(T('Address'), url), url, etiket(T('Words (comma-separated)'), kel), kel,
+  d.append(etiket(T('Name'), ad), ad, etiket(T('Address'), url), url, etiket(T('Words (comma-separated)'), kel), kel,
     etiket(T('Login check: text you can only see when logged in (optional)'), giris), giris,
     isaret(her, T('Alarm on every change')), isaret(hizli, T('Fast: alarm on the first read when a "sold out" text goes away')), isaret(kalici, T('Keep the tab open between reads (for slow pages)')));
   let okuyucu = null;
@@ -387,18 +480,20 @@ function duzenle(kart, x) {
   }
   const sr = el('div', 'satir'); sr.style.marginTop = '12px';
   const kaydet = dugme(T('Save'), 'ana');
-  kaydet.onclick = () => gonder({
-    tip: 'GUNCELLE', id: x.id, ad: ad.value, url: url.value, kelimeler: kel.value, girisYazisi: giris.value,
-    herDegisiklik: her.checked, hizli: hizli.checked, kaliciSekme: kalici.checked, ...(okuyucu ? { okuyucu: okuyucu.value } : {}),
-  });
+  kaydet.onclick = async () => {
+    await istek({
+      tip: 'GUNCELLE', id: x.id, ad: ad.value, url: url.value, kelimeler: kel.value, girisYazisi: giris.value,
+      herDegisiklik: her.checked, hizli: hizli.checked, kaliciSekme: kalici.checked, ...(okuyucu ? { okuyucu: okuyucu.value } : {}),
+    });
+    kilitli = false;
+    await ciz();
+    detayModu('bilgi');
+  };
   const vazgec = dugme(T('Cancel'), 'ikincil');
-  vazgec.onclick = () => { kilitli = false; ciz(); };
+  vazgec.onclick = () => detayModu('bilgi');
   sr.append(kaydet, vazgec);
   d.appendChild(sr);
-  kart.classList.remove('tiklanir');
-  kart.classList.add('acik');
-  kart.replaceChildren(d);
-  ad.focus();
+  return d;
 }
 
 async function gonder(m) { kilitli = false; await istek(m); ciz(); }

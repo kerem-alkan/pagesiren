@@ -9,6 +9,8 @@
   :root { color-scheme:light dark; --yesil:#2e7d32; --turuncu:#b54700; --kirmizi:#d32029; --gri:#6b717b; --zemin:#f3f4f7; --kart:#fff; --yazi:#1c1e21; --soluk:#5a606b; --cizgi:#dfe2e7; --dugme:#fff; --dugme2:#eef0f3; --secili:#e6eaf1; --bilgi:#edf6ee; --bilgiCizgi:#cfe6d1; --uyari:#fff4e5; --uyariCizgi:#ffd08a; --alarm:#fff1f1; --alarmCizgi:#f2a5a8; --golge:0 1px 2px rgba(16,24,40,.06); }
   @media (prefers-color-scheme: dark) { :root { --yesil:#66bb6a; --turuncu:#ffa726; --kirmizi:#ef5350; --gri:#9aa0aa; --zemin:#121418; --kart:#1b1e23; --yazi:#e8eaed; --soluk:#a7adb7; --cizgi:#2e3239; --dugme:#23272d; --dugme2:#2c3138; --secili:#262b33; --bilgi:#17281a; --bilgiCizgi:#2b4a30; --uyari:#2e2415; --uyariCizgi:#6b4e1c; --alarm:#2e1719; --alarmCizgi:#7d2f33; --golge:none; } }
   * { box-sizing:border-box; }
+  html { scrollbar-gutter:stable; }
+  body:has(dialog[open]) { overflow:hidden; }
   [hidden] { display:none !important; }
   body { margin:0; font:15px/1.45 "Segoe UI",system-ui,-apple-system,sans-serif; color:var(--yazi); background:var(--zemin); }
   .gizli { position:absolute !important; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
@@ -49,7 +51,6 @@
 
   .kart { background:var(--kart); border:1px solid var(--cizgi); border-radius:12px; padding:13px 14px; box-shadow:var(--golge); display:flex; flex-direction:column; gap:7px; min-width:0; }
   .kart.tiklanir { cursor:pointer; }
-  .kart.acik { grid-column:1 / -1; }
   .kart.alarm { border-color:var(--alarmCizgi); background:var(--alarm); }
   .kartUst { display:flex; align-items:flex-start; gap:9px; }
   .nokta { width:11px; height:11px; border-radius:50%; flex:0 0 auto; margin-top:6px; background:var(--gri); }
@@ -69,7 +70,22 @@
   .olcek { display:flex; justify-content:space-between; font-size:11px; color:var(--soluk); }
   .dugmeler { display:flex; gap:6px; flex-wrap:wrap; }
   .gecmisAc { align-self:flex-start; font-size:13px; padding:3px 9px; }
-  .gecmis { border-top:1px solid var(--cizgi); padding-top:8px; }
+  .gecmis { border-top:1px solid var(--cizgi); padding-top:10px; }
+  .gecmis h3 { font-size:14px; margin:0 0 8px; }
+
+  /* the details panel: slides in from the right over the dimmed page */
+  dialog.cekmece { position:fixed; inset:0 0 0 auto; margin:0; width:min(560px, 100vw); height:100%; max-width:none; max-height:none; padding:0; border:0; border-left:1px solid var(--cizgi); background:var(--kart); color:var(--yazi); box-shadow:-10px 0 40px rgba(0,0,0,.28); display:flex; flex-direction:column; }
+  dialog.cekmece:not([open]) { display:none; }
+  dialog.cekmece::backdrop { background:rgba(12,14,18,.45); }
+  dialog.cekmece[open] { animation:kayGir .18s ease-out; }
+  @keyframes kayGir { from { transform:translateX(28px); } to { transform:none; } }
+  .cekmeceUst { display:flex; align-items:flex-start; gap:10px; padding:16px 18px 12px; border-bottom:1px solid var(--cizgi); }
+  .cekmeceUst .nokta { margin-top:8px; }
+  .cekmeceBaslik { font-size:18px; margin:0; flex:1 1 auto; min-width:0; word-break:break-word; }
+  .kapatX { font-size:20px; line-height:1; padding:3px 10px; flex:0 0 auto; }
+  .cekmeceGovde { flex:1 1 auto; overflow-y:auto; padding:14px 18px 28px; display:flex; flex-direction:column; gap:12px; }
+  @media (prefers-reduced-motion: reduce) { dialog.cekmece[open] { animation:none; } }
+  @media (max-width: 640px) { dialog.cekmece { width:100vw; border-left:0; } }
   .gecmis ol { margin:0; padding-left:18px; }
   .gecmis li { margin:0 0 8px; font-size:13.5px; }
   .gecmis .zaman { font-weight:600; }
@@ -253,6 +269,8 @@
       </section>
     </main>
   </div>
+
+  <dialog id="detay" class="cekmece" aria-labelledby="detayBaslik"></dialog>
 
   <div class="tost" id="tost" role="status" aria-live="polite" hidden><span id="tostYazi"></span><button id="tostGeri" hidden data-t="Undo">Undo</button></div>
 
