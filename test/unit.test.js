@@ -161,6 +161,16 @@ const bekle = (ms) => new Promise((r) => setTimeout(r, ms));
   await bekle(150);
   ok('a browser that will not close is cut by the timer', sonraki.kapandi === 1 && tar.kapaniyor === null);
 
+  console.log('Dashboard controls: drawn by the page, the same in every browser');
+  // Opera ignores accent-color: it drew a grey slider with an invisible handle on the dark screen, and white tick boxes
+  const sayfa = fs.readFileSync(path.join(KOK, 'extension', 'dashboard.html'), 'utf8');
+  const ekranKodu = fs.readFileSync(path.join(KOK, 'extension', 'dashboard.js'), 'utf8');
+  ok('sliders and tick boxes are not left to the browser', /input\[type=range\] \{ -webkit-appearance:none; appearance:none;/.test(sayfa)
+    && /::-webkit-slider-thumb/.test(sayfa) && /::-moz-range-thumb/.test(sayfa) && /input\[type=checkbox\] \{ -webkit-appearance:none; appearance:none;/.test(sayfa));
+  ok('a contrast theme still gets the browser\'s own controls', /@media \(forced-colors: active\) \{ input\[type=range\], input\[type=checkbox\] \{ -webkit-appearance:auto; appearance:auto; \} \}/.test(sayfa));
+  ok('both sliders keep their red part in step with the handle', /const yaz = \(\) => \{[^\n]*cubukDolgu\(r\)/.test(ekranKodu)
+    && /function ekleAraligiYaz\(\) \{[\s\S]*?cubukDolgu\(\$\('#y_aralik'\)\)[\s\S]*?\n\}/.test(ekranKodu));
+
   console.log('"Open" window: in the middle of the dashboard\'s screen');
   const yer = (e) => JSON.stringify(pencereYeri(e));
   ok('no screen given: the main screen as before', yer(null) === JSON.stringify({ left: 90, top: 50, width: 1280, height: 880 }), yer(null));

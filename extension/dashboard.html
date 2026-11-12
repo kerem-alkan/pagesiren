@@ -6,10 +6,10 @@
 <title>PageSiren</title>
 <link rel="icon" href="icon.png">
 <style>
-  :root { color-scheme:light dark; --yesil:#2e7d32; --turuncu:#b54700; --kirmizi:#d32029; --gri:#6b717b; --zemin:#f3f4f7; --kart:#fff; --yazi:#1c1e21; --soluk:#5a606b; --cizgi:#dfe2e7; --dugme:#fff; --dugme2:#eef0f3; --secili:#e6eaf1; --bilgi:#edf6ee; --bilgiCizgi:#cfe6d1; --uyari:#fff4e5; --uyariCizgi:#ffd08a; --alarm:#fff1f1; --alarmCizgi:#f2a5a8; --golge:0 1px 2px rgba(16,24,40,.06); }
-  @media (prefers-color-scheme: dark) { :root { --yesil:#66bb6a; --turuncu:#ffa726; --kirmizi:#ef5350; --gri:#9aa0aa; --zemin:#121418; --kart:#1b1e23; --yazi:#e8eaed; --soluk:#a7adb7; --cizgi:#2e3239; --dugme:#23272d; --dugme2:#2c3138; --secili:#262b33; --bilgi:#17281a; --bilgiCizgi:#2b4a30; --uyari:#2e2415; --uyariCizgi:#6b4e1c; --alarm:#2e1719; --alarmCizgi:#7d2f33; --golge:none; } }
+  :root { color-scheme:light dark; --yesil:#2e7d32; --turuncu:#b54700; --kirmizi:#d32029; --gri:#6b717b; --zemin:#f3f4f7; --kart:#fff; --yazi:#1c1e21; --soluk:#5a606b; --cizgi:#dfe2e7; --dugme:#fff; --dugme2:#eef0f3; --secili:#e6eaf1; --bilgi:#edf6ee; --bilgiCizgi:#cfe6d1; --uyari:#fff4e5; --uyariCizgi:#ffd08a; --alarm:#fff1f1; --alarmCizgi:#f2a5a8; --iz:#c4c9d1; --kaydirma:#b9bec7; --golge:0 1px 2px rgba(16,24,40,.06); }
+  @media (prefers-color-scheme: dark) { :root { --yesil:#66bb6a; --turuncu:#ffa726; --kirmizi:#ef5350; --gri:#9aa0aa; --zemin:#121418; --kart:#1b1e23; --yazi:#e8eaed; --soluk:#a7adb7; --cizgi:#2e3239; --dugme:#23272d; --dugme2:#2c3138; --secili:#262b33; --bilgi:#17281a; --bilgiCizgi:#2b4a30; --uyari:#2e2415; --uyariCizgi:#6b4e1c; --alarm:#2e1719; --alarmCizgi:#7d2f33; --iz:#474c55; --kaydirma:#3d424a; --golge:none; } }
   * { box-sizing:border-box; }
-  html { scrollbar-gutter:stable; }
+  html { scrollbar-gutter:stable; scrollbar-color:var(--kaydirma) var(--zemin); }
   body:has(dialog[open]) { overflow:hidden; }
   [hidden] { display:none !important; }
   body { margin:0; font:15px/1.45 "Segoe UI",system-ui,-apple-system,sans-serif; color:var(--yazi); background:var(--zemin); }
@@ -66,7 +66,23 @@
   .sorun { font-size:13px; color:var(--turuncu); word-break:break-word; }
   .aralik { display:grid; grid-template-columns:1fr; gap:2px; font-size:13px; color:var(--soluk); }
   .aralik b { color:var(--yazi); }
-  .aralik input[type=range] { width:100%; accent-color:var(--kirmizi); margin:2px 0 0; }
+  /* Sliders and tick boxes are drawn by the page, not left to the browser: Opera ignores accent-color and drew a grey slider
+     with an invisible handle on the dark screen, and white tick boxes. They now look the same in every browser.
+     --oran (0..1, set by dashboard.js) is how far the red part of a slider reaches. */
+  input[type=range] { -webkit-appearance:none; appearance:none; width:100%; height:22px; margin:2px 0 0; padding:0; background:transparent; cursor:pointer; }
+  input[type=range]::-webkit-slider-runnable-track { height:6px; border-radius:3px; background:linear-gradient(to right, var(--kirmizi) calc(var(--oran, 0) * (100% - 16px) + 8px), var(--iz) 0); }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:16px; height:16px; margin-top:-5px; border:0; border-radius:50%; background:var(--kirmizi); transition:transform .12s; }
+  input[type=range]:active::-webkit-slider-thumb { transform:scale(1.18); }
+  input[type=range]::-moz-range-track { height:6px; border-radius:3px; background:var(--iz); }
+  input[type=range]::-moz-range-progress { height:6px; border-radius:3px; background:var(--kirmizi); }
+  input[type=range]::-moz-range-thumb { width:16px; height:16px; border:0; border-radius:50%; background:var(--kirmizi); }
+  input[type=range]:focus-visible { outline-offset:3px; }
+  input[type=checkbox] { -webkit-appearance:none; appearance:none; flex:0 0 auto; width:18px; height:18px; margin:0; border:2px solid var(--soluk); border-radius:5px; background:var(--kart); display:inline-grid; place-content:center; cursor:pointer; }
+  input[type=checkbox]::before { content:""; width:10px; height:10px; background:#fff; clip-path:polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0, 43% 62%); transform:scale(0); transition:transform .1s; }
+  input[type=checkbox]:checked { background:var(--kirmizi); border-color:var(--kirmizi); }
+  input[type=checkbox]:checked::before { transform:scale(1); }
+  @media (prefers-reduced-motion: reduce) { input[type=range]::-webkit-slider-thumb, input[type=checkbox]::before { transition:none; } }
+  @media (forced-colors: active) { input[type=range], input[type=checkbox] { -webkit-appearance:auto; appearance:auto; } }
   .olcek { display:flex; justify-content:space-between; font-size:11px; color:var(--soluk); }
   .dugmeler { display:flex; gap:6px; flex-wrap:wrap; }
   .gecmisAc { align-self:flex-start; font-size:13px; padding:3px 9px; }

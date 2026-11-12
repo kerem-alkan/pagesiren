@@ -21,6 +21,8 @@ const $ = (s) => document.querySelector(s);
 const el = (tag, sinif, yazi) => { const e = document.createElement(tag); if (sinif) e.className = sinif; if (yazi != null) e.textContent = yazi; return e; };
 // The user's own data (watch names, addresses, the page's own lines): a browser translating the screen leaves these as they are
 const veri = (e) => { e.translate = false; return e; };
+// How far the red part of a slider reaches: the page draws its sliders itself, the same in every browser (dashboard.html)
+const cubukDolgu = (r) => { const min = Number(r.min) || 0, max = Number(r.max) || 0; r.style.setProperty('--oran', String(max > min ? (Number(r.value) - min) / (max - min) : 0)); };
 const istek = (m) => chrome.runtime.sendMessage(m);
 const UYGULAMA = !!window.__PAGESIREN_APP;
 // The version this screen was loaded with (in the app: the program's version when it served the page)
@@ -428,7 +430,7 @@ function aralikCubugu(x, onEk) {
   const deger = el('b');
   const [on, arka] = T('Checks every {t}').split('{t}');
   etiket.append(on, deger, arka || '');
-  const yaz = () => { const sn = adimlar[Number(r.value)]; deger.textContent = aralikAdi(sn); r.setAttribute('aria-valuetext', aralikAdi(sn)); };
+  const yaz = () => { const sn = adimlar[Number(r.value)]; deger.textContent = aralikAdi(sn); r.setAttribute('aria-valuetext', aralikAdi(sn)); cubukDolgu(r); };
   yaz();
   r.addEventListener('pointerdown', () => { suruklenen = true; });
   r.addEventListener('pointerup', () => { setTimeout(() => { suruklenen = false; }, 300); });
@@ -562,6 +564,7 @@ function ekleAraligiYaz() {
   const sn = ARALIKLAR[Number($('#y_aralik').value)];
   $('#y_aralikYazi').textContent = aralikAdi(sn);
   $('#y_aralik').setAttribute('aria-valuetext', aralikAdi(sn));
+  cubukDolgu($('#y_aralik'));
   $('#y_olcekMin').textContent = aralikAdi(ARALIKLAR[0]);
   $('#y_olcekMaks').textContent = aralikAdi(ARALIKLAR[ARALIKLAR.length - 1]);
 }
